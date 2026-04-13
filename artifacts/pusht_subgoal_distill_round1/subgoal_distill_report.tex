@@ -1,0 +1,165 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  urlcolor=blue!50!black
+}
+
+\newcommand{\Pass}{\textcolor{green!50!black}{\textbf{PASS}}}
+\newcommand{\Fail}{\textcolor{red!70!black}{\textbf{FAIL}}}
+\newcommand{\NA}{\textcolor{gray!80!black}{\textbf{NOT RUN}}}
+
+\begin{document}
+\setlength{\emergencystretch}{4em}
+\sloppy
+
+\begin{center}
+{\LARGE VW2 Subgoal Distillation Report}\\[0.5em]
+{\large Push-T hard-stop evaluation on branch \texttt{vw2\_subgoal\_distill}}\\[0.75em]
+April 13, 2026
+\end{center}
+
+\section*{Executive Summary}
+This round implemented the continuous-subgoal branch, trained the TeacherOracle policy, and ran the required 50-rollout Push-T evaluation with 100-step episodes and execute-actions-per-plan in \{1, 2\}. The branch failed Gate A immediately. TeacherOracle reached \textbf{0.0\% success} on both execute settings, so the required hard stop was applied. StudentFrozen and StudentJoint were not trained or evaluated.
+
+The failure pattern is concrete: TeacherOracle improved offline action MSE slightly relative to BC (\(0.02137\) vs. \(0.02281\)), but world success remained zero and mean episode reward became worse than BC on both execute settings. This is sufficient evidence to stop the future-conditioned Push-T branch at this stage.
+
+\section*{Scope Completed}
+\begin{itemize}
+\item Created branch \texttt{vw2\_subgoal\_distill}.
+\item Added a history encoder that consumes the last 4 observations, proprio, and previous actions.
+\item Added a future encoder with a 32-dimensional continuous bottleneck and no tokenization.
+\item Added a horizon-conditioned subgoal predictor.
+\item Reused the current action decoder as \texttt{Actor(context, subgoal)} inside a new subgoal system.
+\item Added entrypoints for teacher training, student training, joint training, and evaluation.
+\item Added offline diagnostics for variance, covariance, retrieval, shuffled retrieval, and action gap.
+\item Added world evaluation with 50 rollouts, 100 steps, execute sweep \{1, 2\}, per-episode CSV export, and rollout video export.
+\item Added dataset support for real Push-T HDF5 loading through the stable-worldmodel backend.
+\item Verified code health with \texttt{compileall} and an 8-test unit suite in the project virtual environment.
+\end{itemize}
+
+\section*{Key Files Added or Updated}
+\begin{longtable}{p{0.33\linewidth} p{0.61\linewidth}}
+\toprule
+\textbf{Path} & \textbf{Purpose} \\
+\midrule
+\path{vw2_directact/models/history_encoder.py} & Encodes 4-step observation and action history into a context vector. \\
+\path{vw2_directact/models/future_bottleneck.py} & Encodes future observations into a 32-dimensional continuous subgoal. \\
+\path{vw2_directact/models/subgoal_predictor.py} & Predicts the continuous subgoal from context and horizon. \\
+\path{vw2_directact/data/subgoal_dataset.py} & Provides Push-T history/future batches and real HDF5 loading support. \\
+\path{vw2_directact/subgoal_system.py} & Defines teacher, student, and joint subgoal training logic. \\
+\path{vw2_directact/train/train_teacher_oracle.py} & TeacherOracle training entrypoint. \\
+\path{vw2_directact/train/train_student_predictor.py} & StudentFrozen training entrypoint. \\
+\path{vw2_directact/train/train_joint_subgoal.py} & StudentJoint training entrypoint. \\
+\path{vw2_directact/train/eval_subgoal_policy.py} & Offline and world evaluation with gate checks and artifact export. \\
+\path{vw2_directact/utils/rollout.py} & Online subgoal policy for BC, oracle, and student rollout modes. \\
+\path{vw2_directact/tests/test_subgoal.py} & Unit coverage for dataset, model shapes, and training smoke tests. \\
+\bottomrule
+\end{longtable}
+
+\section*{Experiment Configuration}
+\begin{itemize}
+\item Dataset: Push-T from \path{C:\Users\yiche\.stable-wm\pusht_expert_train.h5}
+\item Runtime device: local RTX 4070 8GB
+\item Remote 4090/5090 spaces: not used for this run
+\item Teacher initialization checkpoint:
+\path{C:\Users\yiche\PycharmProjects\lab_code_26spring\research_code\vw2_directact_outputs\pusht_falsification_oracle\action\last.ckpt}
+\item Teacher output directory:
+\path{C:\Users\yiche\PycharmProjects\lab_code_26spring\research_code\vw2_directact_outputs\pusht_subgoal_distill_round1\teacher_oracle}
+\item Evaluation setting: 50 rollouts, 100 max steps, execute-actions-per-plan in \{1, 2\}
+\item Subgoal setup: history length \(=4\), subgoal dimension \(=32\), plan horizon \(=8\)
+\item Training precision: \texttt{bf16-mixed}
+\end{itemize}
+
+Teacher training completed through epoch 2 (0-indexed), with the final logged validation metrics at step 599:
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+\texttt{val/loss} & 0.0113455 \\
+\texttt{val/teacher\_action\_mse} & 0.0226943 \\
+\texttt{val/subgoal\_batch\_variance} & \(2.8563\times10^{-5}\) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{Results}
+
+\subsection*{Offline and World Metrics}
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Model} & \textbf{Offline MSE} & \textbf{Exec-1 Success} & \textbf{Exec-2 Success} & \textbf{Notes} \\
+\midrule
+BC & 0.022812 & 0.0\% & 0.0\% & latency \(=39.69\) ms \\
+TeacherOracle & 0.021369 & 0.0\% & 0.0\% & offline improves, world stays dead \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Model} & \textbf{Exec-1 Mean Reward} & \textbf{Exec-2 Mean Reward} \\
+\midrule
+BC & -23644.90 & -24199.08 \\
+TeacherOracle & -48110.09 & -36832.53 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Gate Evaluation}
+\begin{center}
+\begin{tabular}{p{0.16\linewidth} p{0.15\linewidth} p{0.56\linewidth}}
+\toprule
+\textbf{Gate} & \textbf{Status} & \textbf{Rule / Outcome} \\
+\midrule
+Gate A & \Fail & TeacherOracle success had to be at least 90\% on execute-1 and execute-2. Measured result: 0.0\% on both. \\
+Gate B & \NA & Not run because Gate A failed and the branch hard-stopped. \\
+Gate C & \NA & Not run because Gate A failed and the branch hard-stopped. \\
+Gate D & \NA & Not run because Gate A failed and the branch hard-stopped. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{Interpretation}
+The teacher policy learned a slightly better offline action fit than BC, but that improvement did not translate into control. World success stayed at zero, and reward regressed sharply. The most defensible conclusion from the finished run is:
+
+\begin{quote}
+The continuous-subgoal teacher did not produce a usable Push-T policy, so the future-conditioned branch should stop here on Push-T.
+\end{quote}
+
+This conclusion follows the stated protocol exactly. No extra model capacity was added. No extra ablations were run after the gate failure. StudentFrozen and StudentJoint were intentionally skipped.
+
+\section*{Artifacts Produced}
+\begin{itemize}
+\item BC rollout videos:
+\path{C:\Users\yiche\PycharmProjects\lab_code_26spring\research_code\vw2_directact_outputs\pusht_subgoal_distill_round1\eval_50rollouts_100steps\videos_execute_1}
+\item Subgoal evaluation summary:
+\path{C:\Users\yiche\PycharmProjects\lab_code_26spring\research_code\vw2_directact_outputs\pusht_subgoal_distill_round1\eval_subgoal_50rollouts_100steps\summary.json}
+\item Per-episode CSVs:
+\path{C:\Users\yiche\PycharmProjects\lab_code_26spring\research_code\vw2_directact_outputs\pusht_subgoal_distill_round1\eval_subgoal_50rollouts_100steps\BC}
+\path{C:\Users\yiche\PycharmProjects\lab_code_26spring\research_code\vw2_directact_outputs\pusht_subgoal_distill_round1\eval_subgoal_50rollouts_100steps\TeacherOracle}
+\item TeacherOracle rollout videos:
+\path{C:\Users\yiche\PycharmProjects\lab_code_26spring\research_code\vw2_directact_outputs\pusht_subgoal_distill_round1\eval_subgoal_50rollouts_100steps\TeacherOracle\videos_execute_1}
+\item Teacher checkpoints and logs:
+\path{C:\Users\yiche\PycharmProjects\lab_code_26spring\research_code\vw2_directact_outputs\pusht_subgoal_distill_round1\teacher_oracle}
+\end{itemize}
+
+\section*{Final Decision}
+\textbf{Stop the whole future-conditioned Push-T branch on this subgoal-distillation variant.} The completed experiment already falsifies the branch under the required gate sequence.
+
+\end{document}

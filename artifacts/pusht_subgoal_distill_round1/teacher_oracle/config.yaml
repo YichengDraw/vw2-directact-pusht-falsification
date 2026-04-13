@@ -1,0 +1,102 @@
+experiment_name: pusht_subgoal_distill_round1
+seed: 7
+output_root: ./vw2_directact_outputs
+logging:
+  use_wandb: false
+  project: vw2_directact
+  entity: null
+data:
+  dataset_type: pusht
+  path: null
+  dataset_name: pusht_expert_train
+  cache_dir: ${oc.env:STABLEWM_HOME,C:/Users/yiche/.stable-wm}
+  image_size: 96
+  plan_horizon: 8
+  train_split: 0.98
+  stride: 16
+  max_train_samples: 12000
+  max_val_samples: 1024
+model:
+  hidden_dim: 128
+  image_channels: 3
+  proprio_dim: 4
+  language_dim: 0
+  action_dim: 2
+  use_vq: true
+  codebook_size: 128
+  num_dyn_queries: 4
+  token_chunk_horizon: 4
+  planner_layers: 4
+  planner_heads: 4
+  action_decoder_layers: 4
+  action_decoder_heads: 4
+  action_chunk: 4
+  freeze_encoder: false
+subgoal:
+  history_steps: 4
+  subgoal_dim: 32
+  history_layers: 2
+  history_heads: 4
+  future_layers: 2
+  future_heads: 4
+  max_horizon: 32
+train:
+  batch_size: 32
+  eval_batch_size: 32
+  num_workers: 0
+  accelerator: gpu
+  devices: 1
+  precision: bf16-mixed
+  max_epochs: 3
+  lr: 0.0002
+  weight_decay: 0.0001
+  grad_clip_norm: 1.0
+  log_every_n_steps: 10
+  limit_train_batches: 200
+  limit_val_batches: 20
+  save_top_k: 1
+  resume_from: null
+  init_from: C:/Users/yiche/PycharmProjects/lab_code_26spring/research_code/vw2_directact_outputs/pusht_falsification_oracle/action/last.ckpt
+  joint_train_encoder: false
+  joint_train_tokenizer: false
+loss:
+  recon_weight: 1.0
+  commit_weight: 0.25
+  temporal_smooth_weight: 0.1
+  planner_weight: 1.0
+  action_weight: 1.0
+  consistency_weight: 0.5
+  video_weight: 0.0
+  huber_delta: 1.0
+  subgoal_weight: 1.0
+  actdistill_weight: 1.0
+  var_weight: 1.0
+  nce_weight: 0.5
+  subgoal_variance_floor: 1.0
+  nce_temperature: 0.1
+sampling:
+  teacher_ratio_start: 0.8
+  teacher_ratio_end: 0.2
+  teacher_ratio_steps: 1000
+  execute_steps: 1
+  temperature: 1.0
+conditioning:
+  mode: mixed
+ablation:
+  mode: full
+eval:
+  offline_batches: 10
+  run_world: true
+  num_rollouts: 50
+  goal_offset_steps: 25
+  max_steps: 100
+  rollout_batch_size: 50
+  save_video: true
+  save_video_count: 10
+  execute_actions_per_plan_sweep:
+  - 1
+  - 2
+  - 4
+  subgoal_execute_actions_per_plan_sweep:
+  - 1
+  - 2

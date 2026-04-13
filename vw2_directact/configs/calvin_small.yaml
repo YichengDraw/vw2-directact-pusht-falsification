@@ -1,0 +1,85 @@
+experiment_name: calvin_small
+seed: 7
+output_root: ./vw2_directact_outputs
+
+logging:
+  use_wandb: false
+  project: vw2_directact
+  entity: null
+
+data:
+  dataset_type: calvin
+  path: ./data/calvin_small
+  dataset_name: null
+  cache_dir: null
+  image_size: 128
+  plan_horizon: 12
+  train_split: 0.98
+  stride: 4
+  max_train_samples: 40000
+  max_val_samples: 2048
+
+model:
+  hidden_dim: 256
+  image_channels: 3
+  proprio_dim: 15
+  language_dim: 384
+  action_dim: 7
+  use_vq: true
+  codebook_size: 512
+  num_dyn_queries: 8
+  token_chunk_horizon: 4
+  planner_layers: 6
+  planner_heads: 8
+  action_decoder_layers: 6
+  action_decoder_heads: 8
+  action_chunk: 4
+  freeze_encoder: true
+
+train:
+  batch_size: 8
+  eval_batch_size: 8
+  num_workers: 4
+  accelerator: auto
+  devices: 1
+  precision: bf16-mixed
+  max_epochs: 10
+  lr: 2.0e-4
+  weight_decay: 1.0e-4
+  grad_clip_norm: 1.0
+  log_every_n_steps: 20
+  limit_train_batches: 500
+  limit_val_batches: 50
+  save_top_k: 1
+  resume_from: null
+  init_from: null
+  joint_train_encoder: false
+  joint_train_tokenizer: false
+
+loss:
+  recon_weight: 1.0
+  commit_weight: 0.25
+  temporal_smooth_weight: 0.1
+  planner_weight: 1.0
+  action_weight: 1.0
+  consistency_weight: 0.5
+  video_weight: 0.2
+  huber_delta: 1.0
+
+sampling:
+  teacher_ratio_start: 0.8
+  teacher_ratio_end: 0.2
+  teacher_ratio_steps: 20000
+  execute_steps: 1
+  temperature: 1.0
+
+ablation:
+  mode: full
+
+eval:
+  offline_batches: 20
+  run_world: false
+  num_rollouts: 0
+  goal_offset_steps: 0
+  eval_budget: 0
+  save_video: false
