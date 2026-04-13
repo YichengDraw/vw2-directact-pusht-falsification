@@ -9,11 +9,13 @@ import h5py
 import lightning as pl
 import numpy as np
 import torch
+import torch.nn as nn
 from omegaconf import OmegaConf
 
 from vw2_directact.data import PushTSubgoalDataset
 from vw2_directact.subgoal_system import VW2SubgoalDataModule, VW2SubgoalSystem
 from vw2_directact.train.eval_subgoal_policy import _subgoal_offline_metrics
+from vw2_directact.utils.rollout import DirectActPolicy, SubgoalPolicy
 
 os.environ.setdefault("WANDB_CONSOLE", "off")
 
@@ -131,7 +133,61 @@ def make_cfg(path: Path):
     )
 
 
+class DummyDirectActModel(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.anchor = nn.Parameter(torch.zeros(()))
+
+    def predict_action_chunk(self, *, plan_override: torch.Tensor | None = None, **kwargs) -> torch.Tensor:
+        if plan_override is None:
+            raise ValueError("plan_override is required for this test.")
+        values = plan_override[:, 0, 0].to(self.anchor.device, dtype=torch.float32)
+        return values.view(-1, 1, 1)
+
+
+class DummySubgoalModel(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.anchor = nn.Parameter(torch.zeros(()))
+
+    def predict_action_chunk(self, *, oracle_subgoal: torch.Tensor | None = None, **kwargs) -> torch.Tensor:
+        if oracle_subgoal is None:
+            raise ValueError("oracle_subgoal is required for this test.")
+        values = oracle_subgoal[:, 0].to(self.anchor.device, dtype=torch.float32)
+        return values.view(-1, 1, 1)
+
+
 class SubgoalTests(unittest.TestCase):
+    def test_directact_policy_uses_stepwise_oracle_plan(self) -> None:
+        policy = DirectActPolicy(
+            model=DummyDirectActModel(),
+            image_size=4,
+            execute_steps=1,
+            mode="oracle",
+            oracle_plan_embeddings_by_step=torch.tensor([[[[1.0]], [[2.0]], [[3.0]]]], dtype=torch.float32),
+        )
+        info = {"pixels": np.zeros((1, 1, 4, 4, 3), dtype=np.uint8)}
+        values = [float(policy.get_action(info)[0, 0]) for _ in range(3)]
+        self.assertEqual(values, [1.0, 2.0, 3.0])
+
+    def test_subgoal_policy_uses_stepwise_oracle_subgoal(self) -> None:
+        policy = SubgoalPolicy(
+            model=DummySubgoalModel(),
+            image_size=4,
+            history_steps=4,
+            action_dim=1,
+            execute_steps=1,
+            horizon_steps=8,
+            mode="oracle",
+            oracle_subgoals_by_step=torch.tensor([[[5.0], [6.0], [7.0]]], dtype=torch.float32),
+            bootstrap_history_pixels=torch.zeros(1, 4, 3, 4, 4, dtype=torch.float32),
+            bootstrap_history_proprio=None,
+            bootstrap_prev_actions=torch.zeros(1, 4, 1, dtype=torch.float32),
+        )
+        info = {"pixels": np.zeros((1, 1, 4, 4, 3), dtype=np.uint8)}
+        values = [float(policy.get_action(info)[0, 0]) for _ in range(3)]
+        self.assertEqual(values, [5.0, 6.0, 7.0])
+
     def test_subgoal_dataset_and_predict_shapes(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir) / "synthetic_pusht.h5"

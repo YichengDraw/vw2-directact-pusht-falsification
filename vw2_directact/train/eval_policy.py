@@ -60,6 +60,15 @@ def _resolve_video_count(cfg) -> int:
     return int(cfg.eval.get("save_video_count", DEFAULT_VIDEO_COUNT))
 
 
+def _resolve_eval_max_steps(cfg, *, fallback: int | None = None) -> int:
+    value = cfg.eval.get("max_steps", None)
+    if value is not None:
+        return int(value)
+    if fallback is not None:
+        return int(fallback)
+    raise ValueError("eval.max_steps is unset and no fallback max_episode_steps was provided.")
+
+
 def _to_device(batch, device):
     output = {}
     for key, value in batch.items():
@@ -87,20 +96,53 @@ def _oracle_plan_embeddings_from_chunk(
     cfg,
     *,
     device: torch.device,
+    max_steps: int,
 ) -> torch.Tensor:
     sequence_length = int(cfg.data.plan_horizon) + 1
-    batch: dict[str, torch.Tensor] = {}
-    pixels = torch.stack([episode["pixels"][:sequence_length] for episode in data], dim=0)
-    batch["pixels"] = _normalize_sequence_pixels(
-        pixels,
-        image_size=int(cfg.data.image_size),
-        device=device,
-    )
-    if "proprio" in data[0]:
-        batch["proprio"] = torch.stack([episode["proprio"][:sequence_length] for episode in data], dim=0).float().to(device)
+    step_batch = 8
+    outputs = []
     with torch.no_grad():
-        teacher_plan = system._teacher_plan(batch, detach=True)
-    return teacher_plan["plan_embeddings"].detach().cpu()
+        for start_step in range(0, max_steps, step_batch):
+            end_step = min(start_step + step_batch, max_steps)
+            pixels = torch.stack(
+                [
+                    torch.stack([episode["pixels"][step : step + sequence_length] for episode in data], dim=0)
+                    for step in range(start_step, end_step)
+                ],
+                dim=1,
+            )
+            batch_size, num_steps = pixels.shape[:2]
+            normalized_pixels = _normalize_sequence_pixels(
+                pixels,
+                image_size=int(cfg.data.image_size),
+                device=device,
+            )
+            batch: dict[str, torch.Tensor] = {
+                "pixels": normalized_pixels.reshape(
+                    batch_size * num_steps,
+                    sequence_length,
+                    *normalized_pixels.shape[-3:],
+                )
+            }
+            if "proprio" in data[0]:
+                proprio = torch.stack(
+                    [
+                        torch.stack([episode["proprio"][step : step + sequence_length] for episode in data], dim=0)
+                        for step in range(start_step, end_step)
+                    ],
+                    dim=1,
+                ).float()
+                batch["proprio"] = proprio.to(device).reshape(batch_size * num_steps, sequence_length, proprio.shape[-1])
+            teacher_plan = system._teacher_plan(batch, detach=True)
+            outputs.append(
+                teacher_plan["plan_embeddings"].reshape(
+                    batch_size,
+                    num_steps,
+                    teacher_plan["plan_embeddings"].shape[1],
+                    teacher_plan["plan_embeddings"].shape[2],
+                ).cpu()
+            )
+    return torch.cat(outputs, dim=1)
 
 
 def _offline_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str) -> dict[str, float]:
@@ -179,7 +221,7 @@ def _select_eval_starts(dataset, cfg) -> tuple[np.ndarray, np.ndarray]:
     episode_ids = dataset.get_col_data(episode_key)
     step_idx = dataset.get_col_data("step_idx")
     episodes = np.unique(episode_ids)
-    required_length = max(int(cfg.eval.goal_offset_steps), int(cfg.data.plan_horizon) + 1)
+    required_length = max(int(cfg.eval.goal_offset_steps), _resolve_eval_max_steps(cfg) + int(cfg.data.plan_horizon))
     lengths = np.array([step_idx[episode_ids == episode].max() + 1 for episode in episodes])
     max_start = lengths - required_length
     starts = []
@@ -204,7 +246,7 @@ def _build_rollout_state(
     world_image_shape: tuple[int, int],
 ) -> dict[str, Any]:
     goal_offset_steps = int(cfg.eval.goal_offset_steps)
-    chunk_length = max(goal_offset_steps, int(cfg.data.plan_horizon) + 1)
+    chunk_length = max(goal_offset_steps, _resolve_eval_max_steps(cfg) + int(cfg.data.plan_horizon))
     end_steps = start_steps + chunk_length
     data = dataset.load_chunk(episodes_idx, start_steps, end_steps)
     columns = dataset.column_names
@@ -286,7 +328,7 @@ def _build_rollout_state(
 
     target_frames = []
     for episode in data:
-        frames = episode["pixels"].permute(0, 2, 3, 1).numpy()
+        frames = episode["pixels"][: _resolve_eval_max_steps(cfg) + 1].permute(0, 2, 3, 1).numpy()
         target_frames.append(_resize_hwc_uint8(frames, world_image_shape))
 
     return {
@@ -384,6 +426,7 @@ def _run_world_batch(
                 setup["data"],
                 cfg,
                 device=next(system.parameters()).device,
+                max_steps=max_steps,
             )
         policy = DirectActPolicy(
             model=system.model,
@@ -391,7 +434,7 @@ def _run_world_batch(
             execute_steps=execute_steps,
             mode=conditioning_mode,
             temperature=float(cfg.sampling.temperature),
-            oracle_plan_embeddings=oracle_plan_embeddings,
+            oracle_plan_embeddings_by_step=oracle_plan_embeddings,
         )
         world.set_policy(policy)
 

@@ -21,6 +21,7 @@ from ..utils.rollout import SubgoalPolicy
 from .eval_policy import (
     _normalize_sequence_pixels,
     _offline_metrics as _legacy_offline_metrics,
+    _resolve_eval_max_steps,
     _resize_hwc_uint8,
     _save_rollout_videos,
     _world_metrics as _legacy_world_metrics,
@@ -153,7 +154,10 @@ def _select_eval_starts(dataset, cfg) -> tuple[np.ndarray, np.ndarray]:
     episode_ids = dataset.get_col_data(episode_key)
     step_idx = dataset.get_col_data("step_idx")
     episodes = np.unique(episode_ids)
-    required_future = max(int(cfg.eval.goal_offset_steps), int(cfg.data.plan_horizon))
+    required_future = max(
+        int(cfg.eval.goal_offset_steps),
+        _resolve_eval_max_steps(cfg) + int(cfg.data.plan_horizon),
+    )
     min_start = int(cfg.subgoal.history_steps) - 1
     starts = []
     for episode in episodes:
@@ -175,11 +179,12 @@ def _build_subgoal_rollout_state(
     start_steps: np.ndarray,
     cfg,
     *,
+    max_steps: int,
     world_image_shape: tuple[int, int],
 ) -> dict[str, Any]:
     history_steps = int(cfg.subgoal.history_steps)
     goal_offset_steps = int(cfg.eval.goal_offset_steps)
-    chunk_length = max(goal_offset_steps, int(cfg.data.plan_horizon) + 1)
+    chunk_length = max(goal_offset_steps, max_steps + int(cfg.data.plan_horizon))
     load_start = start_steps - (history_steps - 1)
     load_end = start_steps + chunk_length
     data = dataset.load_chunk(episodes_idx, load_start, load_end)
@@ -264,23 +269,22 @@ def _build_subgoal_rollout_state(
     bootstrap_history = []
     bootstrap_proprio = []
     bootstrap_prev_actions = []
-    oracle_future_pixels = []
-    oracle_future_proprio = []
+    oracle_rollout_pixels = []
+    oracle_rollout_proprio = []
     target_frames = []
     for episode in data:
         history_pixels = episode["pixels"][:history_steps]
-        future_pixels = episode["pixels"][history_steps : history_steps + int(cfg.data.plan_horizon)]
         actions = episode["action"][: history_steps - 1]
         prev_actions = torch.zeros(history_steps, int(cfg.model.action_dim), dtype=torch.float32)
         if history_steps > 1:
             prev_actions[1:] = actions.float()
         bootstrap_history.append(history_pixels.float())
-        oracle_future_pixels.append(future_pixels.float())
+        oracle_rollout_pixels.append(episode["pixels"].float())
         bootstrap_prev_actions.append(prev_actions)
         if "proprio" in episode:
             bootstrap_proprio.append(episode["proprio"][:history_steps].float())
-            oracle_future_proprio.append(episode["proprio"][history_steps : history_steps + int(cfg.data.plan_horizon)].float())
-        frames = episode["pixels"][current_offset : current_offset + chunk_length].permute(0, 2, 3, 1).numpy()
+            oracle_rollout_proprio.append(episode["proprio"].float())
+        frames = episode["pixels"][current_offset : current_offset + max_steps + 1].permute(0, 2, 3, 1).numpy()
         target_frames.append(_resize_hwc_uint8(frames, world_image_shape))
 
     return {
@@ -289,12 +293,75 @@ def _build_subgoal_rollout_state(
         "bootstrap_history_pixels": torch.stack(bootstrap_history, dim=0),
         "bootstrap_history_proprio": None if not bootstrap_proprio else torch.stack(bootstrap_proprio, dim=0),
         "bootstrap_prev_actions": torch.stack(bootstrap_prev_actions, dim=0),
-        "oracle_future_pixels": torch.stack(oracle_future_pixels, dim=0),
-        "oracle_future_proprio": None if not oracle_future_proprio else torch.stack(oracle_future_proprio, dim=0),
+        "oracle_rollout_pixels": torch.stack(oracle_rollout_pixels, dim=0),
+        "oracle_rollout_proprio": None if not oracle_rollout_proprio else torch.stack(oracle_rollout_proprio, dim=0),
         "episodes_idx": episodes_idx.tolist(),
         "start_steps": start_steps.tolist(),
         "seeds": None if seeds is None else np.asarray(seeds).tolist(),
     }
+
+
+def _oracle_subgoals_from_rollout_sequence(
+    system: VW2SubgoalSystem,
+    setup: dict[str, Any],
+    cfg,
+    *,
+    device: torch.device,
+    max_steps: int,
+) -> torch.Tensor:
+    history_steps = int(cfg.subgoal.history_steps)
+    future_horizon = int(cfg.data.plan_horizon)
+    step_batch = 8
+    rollout_pixels = setup["oracle_rollout_pixels"]
+    rollout_proprio = setup["oracle_rollout_proprio"]
+    outputs = []
+    with torch.no_grad():
+        for start_step in range(0, max_steps, step_batch):
+            end_step = min(start_step + step_batch, max_steps)
+            pixel_windows = torch.stack(
+                [
+                    torch.stack(
+                        [episode[history_steps + step : history_steps + step + future_horizon] for episode in rollout_pixels],
+                        dim=0,
+                    )
+                    for step in range(start_step, end_step)
+                ],
+                dim=1,
+            )
+            batch_size, num_steps = pixel_windows.shape[:2]
+            normalized_pixels = _normalize_sequence_pixels(
+                pixel_windows,
+                image_size=int(cfg.data.image_size),
+                device=device,
+            )
+            future_pixels = normalized_pixels.reshape(
+                batch_size * num_steps,
+                future_horizon,
+                *normalized_pixels.shape[-3:],
+            )
+            future_proprio = None
+            if rollout_proprio is not None:
+                proprio_windows = torch.stack(
+                    [
+                        torch.stack(
+                            [episode[history_steps + step : history_steps + step + future_horizon] for episode in rollout_proprio],
+                            dim=0,
+                        )
+                        for step in range(start_step, end_step)
+                    ],
+                    dim=1,
+                ).float()
+                future_proprio = proprio_windows.to(device).reshape(
+                    batch_size * num_steps,
+                    future_horizon,
+                    proprio_windows.shape[-1],
+                )
+            subgoals = system.model.encode_future_subgoal(
+                future_pixels=future_pixels,
+                future_proprio=future_proprio,
+            )
+            outputs.append(subgoals.reshape(batch_size, num_steps, -1).cpu())
+    return torch.cat(outputs, dim=1)
 
 
 def _run_subgoal_world_batch(
@@ -331,6 +398,7 @@ def _run_subgoal_world_batch(
             episodes_idx,
             start_steps,
             cfg,
+            max_steps=max_steps,
             world_image_shape=world_image_shape,
         )
         device = next(system.parameters()).device
@@ -345,20 +413,15 @@ def _run_subgoal_world_batch(
         bootstrap_prev_actions = setup["bootstrap_prev_actions"].float().to(device)
 
         oracle_subgoal = None
+        oracle_subgoals_by_step = None
         if mode == "oracle":
-            oracle_future_pixels = _normalize_sequence_pixels(
-                setup["oracle_future_pixels"],
-                image_size=int(cfg.data.image_size),
+            oracle_subgoals_by_step = _oracle_subgoals_from_rollout_sequence(
+                system,
+                setup,
+                cfg,
                 device=device,
+                max_steps=max_steps,
             )
-            oracle_future_proprio = None
-            if setup["oracle_future_proprio"] is not None:
-                oracle_future_proprio = setup["oracle_future_proprio"].float().to(device)
-            with torch.no_grad():
-                oracle_subgoal = system.model.encode_future_subgoal(
-                    future_pixels=oracle_future_pixels,
-                    future_proprio=oracle_future_proprio,
-                )
 
         policy = SubgoalPolicy(
             model=system.model,
@@ -369,6 +432,7 @@ def _run_subgoal_world_batch(
             horizon_steps=int(cfg.data.plan_horizon),
             mode=mode,
             oracle_subgoal=oracle_subgoal,
+            oracle_subgoals_by_step=oracle_subgoals_by_step,
             bootstrap_history_pixels=bootstrap_history_pixels,
             bootstrap_history_proprio=bootstrap_history_proprio,
             bootstrap_prev_actions=bootstrap_prev_actions,

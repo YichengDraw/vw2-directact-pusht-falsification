@@ -1,26 +1,26 @@
 # VW2-DirectAct Push-T Falsification
 
-This repository packages a Push-T-focused VW2-DirectAct experiment for public review. It includes the training and evaluation code, the continuous-subgoal distillation implementation, and the finished falsification artifacts from the `vw2_subgoal_distill` round.
+This repository packages the final Push-T-focused VW2-DirectAct falsification record for public review. It includes the training and evaluation code, the continuous-subgoal distillation branch, the archived `round1` artifacts, and the final `round2_oraclefix` rerun after the rollout-side oracle-conditioning bug was fixed.
 
-The finished result is negative and explicit: the continuous-subgoal TeacherOracle failed Gate A, so the future-conditioned Push-T branch was stopped without running StudentFrozen or StudentJoint.
+The final result is negative and explicit: after the oracle-fix rerun, TeacherOracle still failed Gate A with 0.0% world success on execute-1 and execute-2, so the future-conditioned Push-T branch was stopped without running StudentFrozen or StudentJoint.
 
 ## Highlights
 
-- Push-T-first VW2-DirectAct codebase with tokenizer, planner, action decoder, and joint training stages
-- Continuous subgoal branch with `HistoryEncoder`, `FutureBottleneck`, `SubgoalPredictor`, and `VW2SubgoalSystem`
-- Planner diagnostics for entropy, perplexity, top-1 token ratio, unique token count, and conditioning ablations
-- 50-rollout evaluation for 100-step episodes with execute-actions-per-plan sweeps
-- Published artifacts for the completed subgoal-distillation round: report, summary JSON, per-episode CSVs, and rollout videos
+- Push-T-first VW2-DirectAct codebase with tokenizer, planner, action decoder, and continuous-subgoal distillation stages
+- Final evaluator fix for stepwise oracle conditioning in both direct-act and subgoal rollout policies
+- Regression tests that verify oracle plan and oracle subgoal conditioning advance with rollout step
+- Final public artifacts for the oracle-fix rerun: LaTeX report, summary JSON, per-episode CSVs, rollout videos, and direct-act oracle sanity-check JSONs
 
 ## Visual Summary
 
 ```mermaid
 flowchart LR
-    A["TeacherOracle training<br/>3 epochs, 200 train batches, 20 val batches"] --> B["50 rollouts x 100 steps<br/>execute = 1, 2"]
-    B --> C{"Gate A:<br/>TeacherOracle success >= 90%?"}
-    C -->|No| D["Hard stop"]
-    D --> E["StudentFrozen not run"]
-    D --> F["StudentJoint not run"]
+    A["Fix stepwise oracle conditioning<br/>and add regression tests"] --> B["Retrain TeacherOracle<br/>3 epochs, 200 train batches, 20 val batches"]
+    B --> C["Evaluate 50 rollouts x 100 steps<br/>execute = 1, 2"]
+    C --> D{"Gate A:<br/>TeacherOracle success >= 90%?"}
+    D -->|No| E["Hard stop"]
+    E --> F["StudentFrozen not run"]
+    E --> G["StudentJoint not run"]
 ```
 
 ## Repository Layout
@@ -36,11 +36,13 @@ flowchart LR
 │  ├─ tests/
 │  └─ scripts/
 └─ artifacts/
-   └─ pusht_subgoal_distill_round1/
-      ├─ subgoal_distill_report.tex
-      ├─ subgoal_distill_report.pdf
+   ├─ pusht_subgoal_distill_round1/
+   └─ pusht_subgoal_distill_round2_oraclefix/
+      ├─ subgoal_distill_round2_oraclefix_report.tex
+      ├─ subgoal_distill_round2_oraclefix_report.pdf
       ├─ eval_50rollouts_100steps/
       ├─ eval_subgoal_50rollouts_100steps/
+      ├─ directact_oracle_eval_50rollouts_100steps/
       └─ teacher_oracle/
 ```
 
@@ -82,6 +84,8 @@ python -m vw2_directact.train.eval_subgoal_policy `
   --teacher-checkpoint ./path/to/teacher_oracle.ckpt
 ```
 
+On 8 GB GPUs, the packaged config uses `eval.rollout_batch_size=10` for evaluation stability.
+
 Run planner diagnostics for the VQ planner branch:
 
 ```powershell
@@ -94,28 +98,42 @@ Run the earlier falsification sweep script:
 python .\vw2_directact\scripts\run_falsification_round.py
 ```
 
-## Results From The Finished Subgoal-Distillation Round
+## Final Results From `round2_oraclefix`
 
 | Model | Offline Action MSE | Execute-1 Success | Execute-2 Success | Execute-1 Mean Reward | Execute-2 Mean Reward |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| BC | 0.022812 | 0.0% | 0.0% | -23644.90 | -24199.08 |
-| TeacherOracle | 0.021369 | 0.0% | 0.0% | -48110.09 | -36832.53 |
+| BC | 0.022812 | 0.0% | 0.0% | -23644.98 | -24199.06 |
+| TeacherOracle | 0.020557 | 0.0% | 0.0% | -21435.20 | -20406.16 |
+
+TeacherOracle improves offline MSE and mean reward over BC, but it still achieves zero successes in all 100 evaluated world rollouts. That is a direct Gate A failure.
+
+## Evaluator Sanity Check After The Fix
+
+The same fixed evaluator was rerun on the existing direct-act oracle action model:
+
+| Model | Execute-1 Success | Execute-2 Success | Execute-4 Success |
+| --- | ---: | ---: | ---: |
+| DirectAct Oracle | 100.0% | 98.0% | 0.0% |
+
+This separates evaluator correctness from subgoal-branch failure. The evaluator still supports a strong oracle policy on Push-T after the fix.
 
 ## Gate Summary
 
-- Gate A: failed. TeacherOracle needed at least 90% success on execute-1 and execute-2. It reached 0.0% on both.
+- Gate A: failed. TeacherOracle needed at least 90% success on execute-1 and execute-2. It reached 0.0% on both in the oracle-fix rerun.
 - Gate B: not run because the branch hard-stopped at Gate A.
 - Gate C: not run because the branch hard-stopped at Gate A.
 - Gate D: not run because the branch hard-stopped at Gate A.
 
 ## Published Artifacts
 
-- Report source: `artifacts/pusht_subgoal_distill_round1/subgoal_distill_report.tex`
-- Report PDF: `artifacts/pusht_subgoal_distill_round1/subgoal_distill_report.pdf`
-- Evaluation summary: `artifacts/pusht_subgoal_distill_round1/eval_subgoal_50rollouts_100steps/summary.json`
-- Per-episode CSVs: `artifacts/pusht_subgoal_distill_round1/eval_subgoal_50rollouts_100steps/`
-- Rollout videos: `artifacts/pusht_subgoal_distill_round1/eval_50rollouts_100steps/` and `artifacts/pusht_subgoal_distill_round1/eval_subgoal_50rollouts_100steps/TeacherOracle/videos_execute_1/`
-- Teacher training logs: `artifacts/pusht_subgoal_distill_round1/teacher_oracle/`
+- Final rerun report source: `artifacts/pusht_subgoal_distill_round2_oraclefix/subgoal_distill_round2_oraclefix_report.tex`
+- Final rerun report PDF: `artifacts/pusht_subgoal_distill_round2_oraclefix/subgoal_distill_round2_oraclefix_report.pdf`
+- Final rerun evaluation summary: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/summary.json`
+- Final rerun per-episode CSVs: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/`
+- Final rerun rollout videos: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_50rollouts_100steps/` and `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/TeacherOracle/videos_execute_1/`
+- Direct-act oracle sanity-check JSONs: `artifacts/pusht_subgoal_distill_round2_oraclefix/directact_oracle_eval_50rollouts_100steps/`
+- Teacher training logs: `artifacts/pusht_subgoal_distill_round2_oraclefix/teacher_oracle/`
+- Archived first-pass artifacts remain in `artifacts/pusht_subgoal_distill_round1/`
 
 ## Validation
 
@@ -129,8 +147,8 @@ python -m unittest discover -s vw2_directact\tests -v
 ## Notes
 
 - Checkpoints are intentionally excluded from version control.
-- The repository contains the finished experimental evidence needed to justify stopping this Push-T branch.
-- The included LaTeX report is the authoritative write-up of the completed run.
+- The repository contains the finished evidence needed to justify stopping this Push-T branch on Push-T.
+- The included `round2_oraclefix` LaTeX report is the authoritative write-up of the final rerun.
 
 ## License
 

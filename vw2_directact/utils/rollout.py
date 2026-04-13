@@ -67,6 +67,7 @@ class DirectActPolicy(BasePolicy):
         mode: str,
         temperature: float = 1.0,
         oracle_plan_embeddings: torch.Tensor | None = None,
+        oracle_plan_embeddings_by_step: torch.Tensor | None = None,
     ):
         super().__init__()
         self.model = model.eval()
@@ -75,8 +76,10 @@ class DirectActPolicy(BasePolicy):
         self.mode = mode
         self.temperature = temperature
         self.oracle_plan_embeddings = oracle_plan_embeddings
+        self.oracle_plan_embeddings_by_step = oracle_plan_embeddings_by_step
         self._action_queue: torch.Tensor | None = None
         self._steps_until_replan = 0
+        self._rollout_step = 0
 
     def get_action(self, info_dict, **kwargs):
         device = next(self.model.parameters()).device
@@ -84,9 +87,13 @@ class DirectActPolicy(BasePolicy):
             batch = prepare_policy_batch(info_dict, image_size=self.image_size, device=device)
             plan_override = None
             if self.mode == "oracle":
-                if self.oracle_plan_embeddings is None:
+                if self.oracle_plan_embeddings_by_step is not None:
+                    step_index = min(self._rollout_step, self.oracle_plan_embeddings_by_step.shape[1] - 1)
+                    plan_override = self.oracle_plan_embeddings_by_step[:, step_index].to(device)
+                elif self.oracle_plan_embeddings is not None:
+                    plan_override = self.oracle_plan_embeddings.to(device)
+                else:
                     raise ValueError("Oracle policy mode requires oracle_plan_embeddings.")
-                plan_override = self.oracle_plan_embeddings.to(device)
             with torch.no_grad():
                 predicted = self.model.predict_action_chunk(
                     pixels=batch["pixels"],
@@ -103,6 +110,7 @@ class DirectActPolicy(BasePolicy):
         action = self._action_queue[:, 0].numpy()
         self._action_queue = self._action_queue[:, 1:] if self._action_queue.shape[1] > 1 else None
         self._steps_until_replan -= 1
+        self._rollout_step += 1
         return action
 
 
@@ -118,6 +126,7 @@ class SubgoalPolicy(BasePolicy):
         horizon_steps: int,
         mode: str,
         oracle_subgoal: torch.Tensor | None = None,
+        oracle_subgoals_by_step: torch.Tensor | None = None,
         bootstrap_history_pixels: torch.Tensor | None = None,
         bootstrap_history_proprio: torch.Tensor | None = None,
         bootstrap_prev_actions: torch.Tensor | None = None,
@@ -131,12 +140,14 @@ class SubgoalPolicy(BasePolicy):
         self.horizon_steps = horizon_steps
         self.mode = mode
         self.oracle_subgoal = oracle_subgoal
+        self.oracle_subgoals_by_step = oracle_subgoals_by_step
         self._action_queue: torch.Tensor | None = None
         self._steps_until_replan = 0
         self._history_pixels = bootstrap_history_pixels
         self._history_proprio = bootstrap_history_proprio
         self._prev_actions = bootstrap_prev_actions
         self._skip_first_observation = bootstrap_history_pixels is not None
+        self._rollout_step = 0
 
     def _repeat_history(self, value: torch.Tensor) -> torch.Tensor:
         return value.unsqueeze(1).repeat_interleave(self.history_steps, dim=1)
@@ -174,7 +185,13 @@ class SubgoalPolicy(BasePolicy):
 
         if self._action_queue is None or self._steps_until_replan <= 0:
             horizon = torch.full((pixels.shape[0],), self.horizon_steps, device=device, dtype=torch.long)
-            oracle_subgoal = None if self.oracle_subgoal is None else self.oracle_subgoal.to(device)
+            oracle_subgoal = None
+            if self.mode == "oracle":
+                if self.oracle_subgoals_by_step is not None:
+                    step_index = min(self._rollout_step, self.oracle_subgoals_by_step.shape[1] - 1)
+                    oracle_subgoal = self.oracle_subgoals_by_step[:, step_index].to(device)
+                elif self.oracle_subgoal is not None:
+                    oracle_subgoal = self.oracle_subgoal.to(device)
             with torch.no_grad():
                 predicted = self.model.predict_action_chunk(
                     history_pixels=self._history_pixels,
@@ -191,4 +208,5 @@ class SubgoalPolicy(BasePolicy):
         self._action_queue = self._action_queue[:, 1:] if self._action_queue.shape[1] > 1 else None
         self._steps_until_replan -= 1
         self._append_action(torch.as_tensor(action, device=device, dtype=torch.float32))
+        self._rollout_step += 1
         return action

@@ -15,6 +15,8 @@ wandb/
 runs/
 logs/
 tmp/
+environment*.json
+requirements_frozen*.txt
 
 *.ckpt
 *.h5
