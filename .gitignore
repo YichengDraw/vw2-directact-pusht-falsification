@@ -8,9 +8,9 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
-data/
-datasets/
-cache/
+/data/
+/datasets/
+/cache/
 wandb/
 runs/
 logs/

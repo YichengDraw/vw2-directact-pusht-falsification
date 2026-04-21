@@ -251,6 +251,18 @@ class SubgoalTests(unittest.TestCase):
             self.assertIn("retrieval_top1", metrics)
             self.assertIn("retrieval_top1_shuffled", metrics)
 
+    def test_strict_checkpoint_load_rejects_incompatible_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir) / "synthetic_pusht.h5"
+            make_temp_h5(temp_path)
+            cfg = make_cfg(temp_path)
+            checkpoint_path = Path(temp_dir) / "bad.ckpt"
+            torch.save({"state_dict": {"not_a_model_key": torch.zeros(1)}}, checkpoint_path)
+
+            system = VW2SubgoalSystem(cfg, "joint_subgoal")
+            with self.assertRaisesRegex(RuntimeError, "did not match"):
+                system.load_weights_from_checkpoint(str(checkpoint_path), strict=True)
+
 
 if __name__ == "__main__":
     unittest.main()

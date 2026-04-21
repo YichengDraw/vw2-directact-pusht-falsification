@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="748.08pt" height="371.88pt" viewBox="0 0 748.08 371.88" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-04-22T00:20:30.145681</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.8, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 371.88
+L 748.08 371.88
+L 748.08 0
+L 0 0
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 21.6198 127.927948
+L 147.3102 127.927948
+Q 149.3892 127.927948 149.3892 125.860308
+L 149.3892 74.701003
+Q 149.3892 72.633364 147.3102 72.633364
+L 21.6198 72.633364
+Q 19.5408 72.633364 19.5408 74.701003
+L 19.5408 125.860308
+Q 19.5408 127.927948 21.6198 127.927948
+z
+" clip-path="url(#p562fc92190)" style="fill: #e8f1f2; stroke: #28666e; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 21.6198 210.633521
+L 147.3102 210.633521
+Q 149.3892 210.633521 149.3892 208.565882
+L 149.3892 157.406577
+Q 149.3892 155.338938 147.3102 155.338938
+L 21.6198 155.338938
+Q 19.5408 155.338938 19.5408 157.406577
+L 19.5408 208.565882
+Q 19.5408 210.633521 21.6198 210.633521
+z
+" clip-path="url(#p562fc92190)" style="fill: #e8f1f2; stroke: #28666e; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 187.9398 127.927948
+L 319.5702 127.927948
+Q 321.6492 127.927948 321.6492 125.860308
+L 321.6492 74.701003
+Q 321.6492 72.633364 319.5702 72.633364
+L 187.9398 72.633364
+Q 185.8608 72.633364 185.8608 74.701003
+L 185.8608 125.860308
+Q 185.8608 127.927948 187.9398 127.927948
+z
+" clip-path="url(#p562fc92190)" style="fill: #f7e8c4; stroke: #8a5a00; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 187.9398 210.633521
+L 319.5702 210.633521
+Q 321.6492 210.633521 321.6492 208.565882
+L 321.6492 157.406577
+Q 321.6492 155.338938 319.5702 155.338938
+L 187.9398 155.338938
+Q 185.8608 155.338938 185.8608 157.406577
+L 185.8608 208.565882
+Q 185.8608 210.633521 187.9398 210.633521
+z
+" clip-path="url(#p562fc92190)" style="fill: #f7e8c4; stroke: #8a5a00; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 363.1698 127.927948
+L 497.7702 127.927948
+Q 499.8492 127.927948 499.8492 125.860308
+L 499.8492 74.701003
+Q 499.8492 72.633364 497.7702 72.633364
+L 363.1698 72.633364
+Q 361.0908 72.633364 361.0908 74.701003
+L 361.0908 125.860308
+Q 361.0908 127.927948 363.1698 127.927948
+z
+" clip-path="url(#p562fc92190)" style="fill: #f7e8c4; stroke: #8a5a00; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 363.1698 210.633521
+L 497.7702 210.633521
+Q 499.8492 210.633521 499.8492 208.565882
+L 499.8492 157.406577
+Q 499.8492 155.338938 497.7702 155.338938
+L 363.1698 155.338938
+Q 361.0908 155.338938 361.0908 157.406577
+L 361.0908 208.565882
+Q 361.0908 210.633521 363.1698 210.633521
+z
+" clip-path="url(#p562fc92190)" style="fill: #e8e2f3; stroke: #5c4b8a; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 546.1218 169.280734
+L 671.8122 169.280734
+Q 673.8912 169.280734 673.8912 167.213095
+L 673.8912 116.05379
+Q 673.8912 113.986151 671.8122 113.986151
+L 546.1218 113.986151
+Q 544.0428 113.986151 544.0428 116.05379
+L 544.0428 167.213095
+Q 544.0428 169.280734 546.1218 169.280734
+z
+" clip-path="url(#p562fc92190)" style="fill: #f7e8c4; stroke: #8a5a00; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 546.1218 259.666111
+L 671.8122 259.666111
+Q 673.8912 259.666111 673.8912 257.598472
+L 673.8912 213.528216
+Q 673.8912 211.460577 671.8122 211.460577
+L 546.1218 211.460577
+Q 544.0428 211.460577 544.0428 213.528216
+L 544.0428 257.598472
+Q 544.0428 259.666111 546.1218 259.666111
+z
+" clip-path="url(#p562fc92190)" style="fill: #e8e2f3; stroke: #5c4b8a; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 363.1698 259.666111
+L 497.7702 259.666111
+Q 499.8492 259.666111 499.8492 257.598472
+L 499.8492 213.528216
+Q 499.8492 211.460577 497.7702 211.460577
+L 363.1698 211.460577
+Q 361.0908 211.460577 361.0908 213.528216
+L 361.0908 257.598472
+Q 361.0908 259.666111 363.1698 259.666111
+z
+" clip-path="url(#p562fc92190)" style="fill: #e4f4e8; stroke: #287a3e; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 187.9398 259.666111
+L 319.5702 259.666111
+Q 321.6492 259.666111 321.6492 257.598472
+L 321.6492 213.528216
+Q 321.6492 211.460577 319.5702 211.460577
+L 187.9398 211.460577
+Q 185.8608 211.460577 185.8608 213.528216
+L 185.8608 257.598472
+Q 185.8608 259.666111 187.9398 259.666111
+z
+" clip-path="url(#p562fc92190)" style="fill: #f7d9d7; stroke: #a63a35; stroke-width: 1.4; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 150.323082 100.280656
+Q 167.627805 100.280656 183.590887 100.280656
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 178.390887 97.680656
+L 183.590887 100.280656
+L 178.390887 102.880656
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_13">
+    <path d="M 150.323082 182.98623
+Q 167.627805 182.98623 183.590887 182.98623
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 178.390887 180.38623
+L 183.590887 182.98623
+L 178.390887 185.58623
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_14">
+    <path d="M 322.582357 100.280656
+Q 341.373524 100.280656 358.823051 100.280656
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 353.623051 97.680656
+L 358.823051 100.280656
+L 353.623051 102.880656
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_15">
+    <path d="M 322.582357 182.98623
+Q 341.373524 182.98623 358.823051 182.98623
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 353.623051 180.38623
+L 358.823051 182.98623
+L 353.623051 185.58623
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_16">
+    <path d="M 500.547728 101.208732
+Q 524.505645 113.951015 542.757249 132.177736
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 540.915009 126.663559
+L 542.757249 132.177736
+L 537.240563 130.343021
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_17">
+    <path d="M 500.557139 182.071846
+Q 524.460725 169.609331 542.736845 151.660911
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 537.205007 153.449421
+L 542.736845 151.660911
+L 540.84855 157.159488
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_18">
+    <path d="M 608.67 170.215823
+Q 608.67 190.369245 608.67 209.181025
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 611.27 203.981025
+L 608.67 209.181025
+L 606.07 203.981025
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_19">
+    <path d="M 543.112688 235.563344
+Q 521.946157 235.563344 502.121266 235.563344
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 507.321266 238.163344
+L 502.121266 235.563344
+L 507.321266 232.963344
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_20">
+    <path d="M 360.157643 235.563344
+Q 341.366476 235.563344 323.916949 235.563344
+" clip-path="url(#p562fc92190)" style="fill: none; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 329.116949 238.163344
+L 323.916949 235.563344
+L 329.116949 232.963344
+z
+" clip-path="url(#p562fc92190)" style="fill: #475467; stroke: #475467; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 17px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #101828" x="11.7" y="24.664131" transform="rotate(-0 11.7 24.664131)">VW2-DirectAct Push-T Continuous-Subgoal Pipeline</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #475467" x="11.7" y="42.386754" transform="rotate(-0 11.7 42.386754)">Final oracle-fix evaluation advances oracle conditioning at every rollout step.</text>
+   </g>
+   <g id="text_3">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="84.465" y="93.702783" transform="rotate(-0 84.465 93.702783)">History Window</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(53.961203 106.606904)">pixels, proprio</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(49.239938 115.71425)">previous actions</text>
+   </g>
+   <g id="text_5">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="84.465" y="176.451326" transform="rotate(-0 84.465 176.451326)">Future Window</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(41.399828 189.312478)">step-aligned frames</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(45.695125 198.419824)">for oracle subgoal</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="253.755" y="93.702783" transform="rotate(-0 253.755 93.702783)">HistoryEncoder</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(206.667313 106.606904)">observation summary</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(214.106984 115.71425)">plus action history</text>
+   </g>
+   <g id="text_9">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="253.755" y="176.451326" transform="rotate(-0 253.755 176.451326)">FutureBottleneck</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(216.168969 189.192884)">continuous latent</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(236.381656 198.30023)">z_future</text>
+   </g>
+   <g id="text_11">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="430.47" y="93.702783" transform="rotate(-0 430.47 93.702783)">SubgoalPredictor</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(384.262469 106.48731)">student path predicts</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(384.151609 115.594657)">z_future from context</text>
+   </g>
+   <g id="text_13">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="430.47" y="176.408357" transform="rotate(-0 430.47 176.408357)">Oracle Subgoal</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(388.580609 189.312478)">TeacherOracle uses</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(379.558 198.419824)">stepwise future window</text>
+   </g>
+   <g id="text_15">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="608.967" y="135.098539" transform="rotate(-0 608.967 135.098539)">ActionDecoder</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(569.537344 147.959691)">context + subgoal</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(575.651406 157.067037)">to action chunk</text>
+   </g>
+   <g id="text_17">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="608.967" y="230.2615" transform="rotate(-0 608.967 230.2615)">SubgoalPolicy</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(552.766672 240.755345)">replan every execute step</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(557.675391 249.862691)">advance rollout counter</text>
+   </g>
+   <g id="text_19">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="430.47" y="230.304469" transform="rotate(-0 430.47 230.304469)">Push-T World</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(381.264563 240.755345)">50 rollouts x 100 steps</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(398.880453 249.862691)">execute = 1, 2</text>
+   </g>
+   <g id="text_21">
+    <text style="font-weight: 700; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #1d2939" x="253.755" y="230.304469" transform="rotate(-0 253.755 230.304469)">Gate A</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(204.896922 240.755345)">TeacherOracle success</text>
+    <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; fill: #344054" transform="translate(216.244891 249.862691)">&gt;= 90% required</text>
+   </g>
+   <g id="text_23">
+    <g id="patch_21">
+     <path d="M 326.293125 104.410398
+L 356.446875 104.410398
+Q 357.886875 104.410398 357.886875 102.970398
+L 357.886875 95.227898
+Q 357.886875 93.787898 356.446875 93.787898
+L 326.293125 93.787898
+Q 324.853125 93.787898 324.853125 95.227898
+L 324.853125 102.970398
+Q 324.853125 104.410398 326.293125 104.410398
+z
+" style="fill: #ffffff; opacity: 0.9"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #475467" x="341.37" y="101.306648" transform="rotate(-0 341.37 101.306648)">context</text>
+   </g>
+   <g id="text_24">
+    <g id="patch_22">
+     <path d="M 325.684375 187.115971
+L 357.055625 187.115971
+Q 358.495625 187.115971 358.495625 185.675971
+L 358.495625 177.933471
+Q 358.495625 176.493471 357.055625 176.493471
+L 325.684375 176.493471
+Q 324.244375 176.493471 324.244375 177.933471
+L 324.244375 185.675971
+Q 324.244375 187.115971 325.684375 187.115971
+z
+" style="fill: #ffffff; opacity: 0.9"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #475467" x="341.37" y="184.012221" transform="rotate(-0 341.37 184.012221)">oracle z</text>
+   </g>
+   <g id="text_25">
+    <g id="patch_23">
+     <path d="M 506.25475 115.634725
+L 543.57725 115.634725
+Q 545.01725 115.634725 545.01725 114.194725
+L 545.01725 106.452225
+Q 545.01725 105.012225 543.57725 105.012225
+L 506.25475 105.012225
+Q 504.81475 105.012225 504.81475 106.452225
+L 504.81475 114.194725
+Q 504.81475 115.634725 506.25475 115.634725
+z
+" style="fill: #ffffff; opacity: 0.9"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #475467" x="524.916" y="112.530975" transform="rotate(-0 524.916 112.530975)">student z</text>
+   </g>
+   <g id="text_26">
+    <g id="patch_24">
+     <path d="M 506.22475 178.550037
+L 543.60725 178.550037
+Q 545.04725 178.550037 545.04725 177.110037
+L 545.04725 169.367537
+Q 545.04725 167.927537 543.60725 167.927537
+L 506.22475 167.927537
+Q 504.78475 167.927537 504.78475 169.367537
+L 504.78475 177.110037
+Q 504.78475 178.550037 506.22475 178.550037
+z
+" style="fill: #ffffff; opacity: 0.9"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #475467" x="524.916" y="175.446287" transform="rotate(-0 524.916 175.446287)">teacher z</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #344054" x="20.61" y="320.04118" transform="rotate(-0 20.61 320.04118)">Final observed result: TeacherOracle improves offline MSE and reward over BC but remains 0/50 successful on execute-1 and execute-2.</text>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #344054" x="20.61" y="336.582295" transform="rotate(-0 20.61 336.582295)">DirectAct oracle sanity check: execute-1 100%, execute-2 98%, execute-4 0%, confirming the evaluator can recognize a strong oracle policy.</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p562fc92190">
+   <rect x="5.76" y="5.76" width="736.56" height="360.36"/>
+  </clipPath>
+ </defs>
+</svg>

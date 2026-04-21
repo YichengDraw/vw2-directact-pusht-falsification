@@ -1,27 +1,25 @@
 # VW2-DirectAct Push-T Falsification
 
-This repository packages the final Push-T-focused VW2-DirectAct falsification record for public review. It includes the training and evaluation code, the continuous-subgoal distillation branch, the archived `round1` artifacts, and the final `round2_oraclefix` rerun after the rollout-side oracle-conditioning bug was fixed.
+This repository packages the final Push-T-focused VW2-DirectAct falsification record for public review. It includes the training and evaluation code, the continuous-subgoal distillation branch, and the validated `round2_oraclefix` artifacts produced after fixing the rollout-side oracle-conditioning bug.
 
-The final result is negative and explicit: after the oracle-fix rerun, TeacherOracle still failed Gate A with 0.0% world success on execute-1 and execute-2, so the future-conditioned Push-T branch was stopped without running StudentFrozen or StudentJoint.
+The final result is negative and explicit: after the oracle-fix rerun, TeacherOracle still failed Gate A with 0.0% world success on execute-1 and execute-2. The future-conditioned Push-T branch was stopped without running StudentFrozen or StudentJoint.
 
 ## Highlights
 
 - Push-T-first VW2-DirectAct codebase with tokenizer, planner, action decoder, and continuous-subgoal distillation stages
-- Final evaluator fix for stepwise oracle conditioning in both direct-act and subgoal rollout policies
-- Regression tests that verify oracle plan and oracle subgoal conditioning advance with rollout step
-- Final public artifacts for the oracle-fix rerun: LaTeX report, summary JSON, per-episode CSVs, rollout videos, and direct-act oracle sanity-check JSONs
+- Stepwise oracle-conditioning fix in both direct-act and subgoal rollout policies
+- Regression tests for stepwise oracle plan and subgoal selection
+- Final public artifacts for `round2_oraclefix`: report, summary JSON, per-episode CSVs, rollout videos, TeacherOracle logs, and direct-act oracle sanity-check JSONs
 
-## Visual Summary
+## Model Pipeline
 
-```mermaid
-flowchart LR
-    A["Fix stepwise oracle conditioning<br/>and add regression tests"] --> B["Retrain TeacherOracle<br/>3 epochs, 200 train batches, 20 val batches"]
-    B --> C["Evaluate 50 rollouts x 100 steps<br/>execute = 1, 2"]
-    C --> D{"Gate A:<br/>TeacherOracle success >= 90%?"}
-    D -->|No| E["Hard stop"]
-    E --> F["StudentFrozen not run"]
-    E --> G["StudentJoint not run"]
-```
+![VW2-DirectAct continuous-subgoal model pipeline](docs/figures/model_pipeline.svg)
+
+More detail: [docs/architecture.md](docs/architecture.md).
+
+## Experiment Flow
+
+![Push-T oracle-fix experiment flow](docs/figures/experiment_flow.svg)
 
 ## Repository Layout
 
@@ -35,8 +33,9 @@ flowchart LR
 │  ├─ utils/
 │  ├─ tests/
 │  └─ scripts/
+├─ docs/
+│  └─ figures/
 └─ artifacts/
-   ├─ pusht_subgoal_distill_round1/
    └─ pusht_subgoal_distill_round2_oraclefix/
       ├─ subgoal_distill_round2_oraclefix_report.tex
       ├─ subgoal_distill_round2_oraclefix_report.pdf
@@ -48,7 +47,7 @@ flowchart LR
 
 ## Installation
 
-Use Python 3.11 or newer.
+Use Python 3.11.
 
 ```powershell
 python -m venv .venv
@@ -56,47 +55,62 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-`stable_worldmodel` is required for Push-T world rollouts and real HDF5 loading. It is not bundled in this repository. Install it from your local checkout or your internal package source so that `import stable_worldmodel` works.
+`stable_worldmodel` is required for Push-T world rollouts and real HDF5 loading. It is not bundled in this repository. Install it from your local checkout or internal package source so that `import stable_worldmodel` works.
 
 ## Data Preparation
 
-You have two supported ways to point the code at Push-T:
+Use either an explicit HDF5 path or `STABLEWM_HOME`:
 
-1. Set `data.path=/absolute/path/to/pusht_expert_train.h5`
-2. Or set `STABLEWM_HOME` so the loader can resolve `pusht_expert_train.h5` under `$STABLEWM_HOME`
+```powershell
+$env:STABLEWM_HOME = "C:\Users\yiche\.stable-wm"
+```
 
-If neither is provided, the code falls back to `~/.stable-wm/pusht_expert_train.h5`.
+The loader resolves the dataset in this order:
 
-## Usage
+1. `data.path=/absolute/path/to/pusht_expert_train.h5`
+2. `$STABLEWM_HOME/pusht_expert_train.h5`
+3. `~/.stable-wm/pusht_expert_train.h5`
+
+## Final Rerun Commands
+
+The final run used `eval.rollout_batch_size=10` for stable local RTX 4070 8 GB world evaluation. This changes batching only, not evaluation semantics.
 
 Train the TeacherOracle subgoal branch:
 
 ```powershell
-python -m vw2_directact.train.train_teacher_oracle --config-name pusht experiment_name=pusht_subgoal_distill_round1
+python -m vw2_directact.train.train_teacher_oracle --config-name pusht `
+  experiment_name=pusht_subgoal_distill_round2_oraclefix `
+  train.init_from=/path/to/pusht_falsification_oracle/action/last.ckpt `
+  eval.rollout_batch_size=10
 ```
 
 Evaluate BC and TeacherOracle with 50 rollouts and 100 steps:
 
 ```powershell
-python -m vw2_directact.train.eval_subgoal_policy `
-  --config-name pusht `
-  --bc-checkpoint ./path/to/bc.ckpt `
-  --teacher-checkpoint ./path/to/teacher_oracle.ckpt
+python -m vw2_directact.train.eval_subgoal_policy --config-name pusht `
+  --bc-checkpoint /path/to/pusht_falsification_bc/action/last.ckpt `
+  --teacher-checkpoint ./vw2_directact_outputs/pusht_subgoal_distill_round2_oraclefix/teacher_oracle/last.ckpt `
+  experiment_name=pusht_subgoal_distill_round2_oraclefix `
+  eval.rollout_batch_size=10 `
+  eval.num_rollouts=50 `
+  eval.max_steps=100
 ```
 
-On 8 GB GPUs, the packaged config uses `eval.rollout_batch_size=10` for evaluation stability.
-
-Run planner diagnostics for the VQ planner branch:
+Run the direct-act oracle evaluator sanity check:
 
 ```powershell
-python -m vw2_directact.train.diagnose_planner --config-name pusht --checkpoint ./path/to/planner_or_joint.ckpt
+python -m vw2_directact.train.eval_policy --config-name pusht `
+  --checkpoint /path/to/pusht_falsification_oracle/action/last.ckpt `
+  experiment_name=pusht_falsification_oracle `
+  conditioning.mode=oracle `
+  ablation.mode=full `
+  model.use_vq=true `
+  eval.rollout_batch_size=10 `
+  eval.num_rollouts=50 `
+  eval.max_steps=100
 ```
 
-Run the earlier falsification sweep script:
-
-```powershell
-python .\vw2_directact\scripts\run_falsification_round.py
-```
+The older `vw2_directact/scripts/run_falsification_round.py` is retained as a legacy sweep helper. The public final result is the oracle-fix rerun above.
 
 ## Final Results From `round2_oraclefix`
 
@@ -107,15 +121,15 @@ python .\vw2_directact\scripts\run_falsification_round.py
 
 TeacherOracle improves offline MSE and mean reward over BC, but it still achieves zero successes in all 100 evaluated world rollouts. That is a direct Gate A failure.
 
-## Evaluator Sanity Check After The Fix
+## Evaluator Sanity Check
 
-The same fixed evaluator was rerun on the existing direct-act oracle action model:
+The same fixed evaluator was rerun on the direct-act oracle action model.
 
 | Model | Execute-1 Success | Execute-2 Success | Execute-4 Success |
 | --- | ---: | ---: | ---: |
 | DirectAct Oracle | 100.0% | 98.0% | 0.0% |
 
-This separates evaluator correctness from subgoal-branch failure. The evaluator still supports a strong oracle policy on Push-T after the fix.
+This separates evaluator correctness from the subgoal-branch failure. The evaluator still supports a strong oracle policy on Push-T after the fix.
 
 ## Gate Summary
 
@@ -126,29 +140,31 @@ This separates evaluator correctness from subgoal-branch failure. The evaluator 
 
 ## Published Artifacts
 
-- Final rerun report source: `artifacts/pusht_subgoal_distill_round2_oraclefix/subgoal_distill_round2_oraclefix_report.tex`
-- Final rerun report PDF: `artifacts/pusht_subgoal_distill_round2_oraclefix/subgoal_distill_round2_oraclefix_report.pdf`
-- Final rerun evaluation summary: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/summary.json`
-- Final rerun per-episode CSVs: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/`
-- Final rerun rollout videos: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_50rollouts_100steps/` and `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/TeacherOracle/videos_execute_1/`
+- Final report source: `artifacts/pusht_subgoal_distill_round2_oraclefix/subgoal_distill_round2_oraclefix_report.tex`
+- Final report PDF: `artifacts/pusht_subgoal_distill_round2_oraclefix/subgoal_distill_round2_oraclefix_report.pdf`
+- Evaluation summary: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/summary.json`
+- Per-episode CSVs: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/`
+- Rollout videos: `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_50rollouts_100steps/` and `artifacts/pusht_subgoal_distill_round2_oraclefix/eval_subgoal_50rollouts_100steps/TeacherOracle/videos_execute_1/`
 - Direct-act oracle sanity-check JSONs: `artifacts/pusht_subgoal_distill_round2_oraclefix/directact_oracle_eval_50rollouts_100steps/`
 - Teacher training logs: `artifacts/pusht_subgoal_distill_round2_oraclefix/teacher_oracle/`
-- Archived first-pass artifacts remain in `artifacts/pusht_subgoal_distill_round1/`
 
 ## Validation
 
-The packaged code was validated with:
+The packaged code should validate with:
 
 ```powershell
-python -m compileall vw2_directact
-python -m unittest discover -s vw2_directact\tests -v
+python -B -m compileall -q vw2_directact
+python -B -m unittest discover -s vw2_directact\tests -v
+git diff --check
 ```
+
+World-evaluation code now raises a hard error when `eval.run_world=true` but `stable_worldmodel`, the Push-T HDF5 dataset, or valid rollout starts are unavailable.
 
 ## Notes
 
 - Checkpoints are intentionally excluded from version control.
-- The repository contains the finished evidence needed to justify stopping this Push-T branch on Push-T.
-- The included `round2_oraclefix` LaTeX report is the authoritative write-up of the final rerun.
+- Raw datasets and local caches are excluded from version control.
+- The repository contains the final evidence needed to justify stopping this Push-T branch on Push-T.
 
 ## License
 

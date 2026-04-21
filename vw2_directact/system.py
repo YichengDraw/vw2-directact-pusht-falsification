@@ -256,12 +256,21 @@ class VW2DirectActSystem(pl.LightningModule):
         if bool(self.cfg.train.joint_train_tokenizer):
             self.model.tokenizer.requires_grad_(True)
 
-    def load_weights_from_checkpoint(self, checkpoint_path: str | None) -> None:
+    def load_weights_from_checkpoint(self, checkpoint_path: str | None, *, strict: bool = False) -> None:
         if not checkpoint_path:
             return
         checkpoint = torch.load(checkpoint_path, map_location="cpu")
         state_dict = checkpoint["state_dict"] if "state_dict" in checkpoint else checkpoint
-        self.load_state_dict(state_dict, strict=False)
+        incompatible = self.load_state_dict(state_dict, strict=False)
+        if incompatible.missing_keys or incompatible.unexpected_keys:
+            message = (
+                f"Checkpoint {checkpoint_path} did not match the current model. "
+                f"Missing keys: {incompatible.missing_keys}. "
+                f"Unexpected keys: {incompatible.unexpected_keys}."
+            )
+            if strict:
+                raise RuntimeError(message)
+            print(f"Warning: {message}")
 
     def _current_step(self, value: torch.Tensor | None) -> torch.Tensor | None:
         if value is None:

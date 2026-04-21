@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from ..data.common import IMAGENET_MEAN, IMAGENET_STD
+from ..data.common import IMAGENET_MEAN, IMAGENET_STD, resolve_h5_path
 from ..system import VW2DirectActDataModule, VW2DirectActSystem
 from ..utils.metrics import batch_action_mse, latency_ms
 from ..utils.rollout import DirectActPolicy
@@ -67,6 +67,15 @@ def _resolve_eval_max_steps(cfg, *, fallback: int | None = None) -> int:
     if fallback is not None:
         return int(fallback)
     raise ValueError("eval.max_steps is unset and no fallback max_episode_steps was provided.")
+
+
+def _resolve_world_dataset(cfg):
+    import stable_worldmodel as swm
+
+    resolved = resolve_h5_path(cfg.data.path, cfg.data.dataset_name, cfg.data.cache_dir)
+    if not resolved.exists():
+        raise FileNotFoundError(f"Push-T HDF5 dataset not found: {resolved}")
+    return swm.data.HDF5Dataset(resolved.stem, cache_dir=str(resolved.parent))
 
 
 def _to_device(batch, device):
@@ -487,15 +496,11 @@ def _run_world_batch(
 def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, execute_steps: int, save_videos: bool) -> dict[str, Any]:
     if str(cfg.data.dataset_type) != "pusht" or not bool(cfg.eval.run_world):
         return {}
-    try:
-        import stable_worldmodel as swm
-    except Exception:
-        return {}
 
-    dataset = swm.data.HDF5Dataset(str(cfg.data.dataset_name), cache_dir=cfg.data.cache_dir)
+    dataset = _resolve_world_dataset(cfg)
     eval_episodes, eval_starts = _select_eval_starts(dataset, cfg)
     if eval_episodes.size == 0:
-        return {}
+        raise ValueError("No valid Push-T world-evaluation rollout starts were found.")
 
     rollout_batch_size = max(1, _resolve_rollout_batch_size(cfg))
     rollout_dir = Path(cfg.output_root) / cfg.experiment_name / f"eval_{int(cfg.eval.num_rollouts)}rollouts_{int(cfg.eval.max_steps)}steps"
@@ -549,7 +554,7 @@ def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, e
 def main() -> None:
     args, cfg = load_cfg_for_eval()
     system = VW2DirectActSystem(cfg, "joint")
-    system.load_weights_from_checkpoint(args.checkpoint)
+    system.load_weights_from_checkpoint(args.checkpoint, strict=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     system.to(device)
     system.eval()

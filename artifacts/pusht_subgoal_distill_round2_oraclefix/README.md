@@ -18,4 +18,6 @@ This folder contains the final public artifacts from the `pusht_subgoal_distill_
 - raw datasets
 - local caches
 
-This is the final rerun after the stepwise oracle-conditioning fix. Gate A still failed, so the Push-T future-conditioned branch was stopped.
+This is the only published experiment artifact set in the final package. The older first-pass `round1` artifacts were removed because they predate the stepwise oracle-conditioning fix.
+
+Gate A still failed after the fix, so the Push-T future-conditioned branch was stopped before StudentFrozen or StudentJoint.

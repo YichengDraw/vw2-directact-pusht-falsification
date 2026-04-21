@@ -71,7 +71,7 @@ def _to_device(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
 
 def _load_subgoal_system(cfg, checkpoint: str) -> VW2SubgoalSystem:
     system = VW2SubgoalSystem(cfg, "joint_subgoal")
-    system.load_weights_from_checkpoint(checkpoint)
+    system.load_weights_from_checkpoint(checkpoint, strict=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     system.to(device)
     system.eval()
@@ -489,17 +489,13 @@ def _run_subgoal_world_batch(
 def _subgoal_world_metrics(system: VW2SubgoalSystem, cfg, *, mode: str, execute_steps: int, label: str) -> dict[str, Any]:
     if str(cfg.data.dataset_type) != "pusht" or not bool(cfg.eval.run_world):
         return {}
-    try:
-        _resolve_world_dataset(cfg)
-    except Exception:
-        return {}
 
     dataset = _resolve_world_dataset(cfg)
     eval_episodes, eval_starts = _select_eval_starts(dataset, cfg)
     if eval_episodes.size == 0:
-        return {}
+        raise ValueError("No valid Push-T world-evaluation rollout starts were found.")
 
-    rollout_batch_size = int(cfg.eval.rollout_batch_size)
+    rollout_batch_size = max(1, int(cfg.eval.rollout_batch_size))
     output_dir = Path(cfg.output_root) / cfg.experiment_name / f"eval_subgoal_{int(cfg.eval.num_rollouts)}rollouts_{int(cfg.eval.max_steps)}steps" / label
     video_dir = output_dir / f"videos_execute_{execute_steps}"
     videos_remaining = int(cfg.eval.save_video_count) if bool(cfg.eval.save_video) and execute_steps == _resolve_execute_sweep(cfg)[0] else 0
@@ -593,7 +589,7 @@ def _write_per_episode_csv(path: Path, label: str, execute_steps: int, world_met
 
 def _evaluate_legacy_bc(cfg, checkpoint: str, execute_sweep: list[int], output_dir: Path) -> dict[str, Any]:
     system = VW2DirectActSystem(cfg, "joint")
-    system.load_weights_from_checkpoint(checkpoint)
+    system.load_weights_from_checkpoint(checkpoint, strict=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     system.to(device)
     system.eval()

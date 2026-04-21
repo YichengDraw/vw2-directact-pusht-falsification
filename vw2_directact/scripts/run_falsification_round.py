@@ -74,7 +74,12 @@ def _eval_records_if_complete(output_root: Path, experiment_name: str) -> list[d
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the VW2-DirectAct Push-T falsification round.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run the legacy VW2-DirectAct Push-T sweep. The public final package "
+            "uses the oracle-fix subgoal rerun under artifacts/pusht_subgoal_distill_round2_oraclefix."
+        )
+    )
     parser.add_argument("--config-name", default="pusht")
     parser.add_argument("--config-path", default=None)
     parser.add_argument("--python", default=sys.executable)
@@ -93,7 +98,7 @@ def main() -> None:
         "data.max_val_samples=1024",
         "eval.num_rollouts=50",
         "eval.max_steps=100",
-        "eval.rollout_batch_size=50",
+        "eval.rollout_batch_size=10",
     ]
 
     experiments = [
