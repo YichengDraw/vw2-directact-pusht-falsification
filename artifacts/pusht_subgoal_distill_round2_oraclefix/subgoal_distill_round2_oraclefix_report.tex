@@ -61,11 +61,15 @@ The final rerun evaluates the TeacherOracle path. StudentFrozen and StudentJoint
 
 Gate A requires TeacherOracle success of at least 90\% on execute-1 and execute-2 over 50 rollouts with 100 world steps per rollout. The final rerun uses \texttt{eval.rollout\_batch\_size=10} for stable local RTX 4070 8 GB evaluation. This changes batching only, not evaluation semantics.
 
+\textbf{Evaluation scope.}
+The world rollouts are deterministic starts from \texttt{pusht\_expert\_train.h5}, selected by the evaluator from valid expert episodes. They are not an episode-held-out test split. BC and the direct-act oracle sanity check use direct-act evaluator starts: episodes 0--49 at \texttt{start\_step=0}. TeacherOracle uses subgoal evaluator starts: episodes 101--150 at \texttt{start\_step=3}. Offline train/validation samples are window-level splits, so offline validation metrics should not be interpreted as episode-level generalization evidence.
+
 \section*{3. Implementation Fixes}
 \begin{itemize}
   \item \textbf{Stepwise oracle conditioning.} \texttt{DirectActPolicy} and \texttt{SubgoalPolicy} consume per-step oracle plan/subgoal tensors and advance a rollout-step counter during world evaluation.
   \item \textbf{TeacherOracle world evaluation.} \texttt{eval\_subgoal\_policy.py} generates oracle subgoals from rollout windows aligned to the current rollout step.
   \item \textbf{Direct-act oracle evaluation.} \texttt{eval\_policy.py} advances oracle plan conditioning by rollout step and uses the configured maximum evaluation length.
+  \item \textbf{Rollout count guard.} World evaluation now raises an error if fewer valid starts are found than \texttt{eval.num\_rollouts} requests.
   \item \textbf{Regression coverage.} Unit tests verify stepwise oracle plan selection and stepwise oracle subgoal selection.
 \end{itemize}
 

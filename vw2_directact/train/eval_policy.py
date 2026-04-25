@@ -245,6 +245,20 @@ def _select_eval_starts(dataset, cfg) -> tuple[np.ndarray, np.ndarray]:
     return np.asarray(rows[episode_key]), np.asarray(rows["step_idx"])
 
 
+def _require_positive_rollout_count(cfg, *, context: str) -> int:
+    requested = int(cfg.eval.num_rollouts)
+    if requested <= 0:
+        raise ValueError(f"{context} requires eval.num_rollouts to be positive, got {requested}.")
+    return requested
+
+
+def _require_requested_rollouts(eval_episodes: np.ndarray, cfg, *, context: str) -> None:
+    requested = _require_positive_rollout_count(cfg, context=context)
+    found = int(eval_episodes.size)
+    if found < requested:
+        raise ValueError(f"{context} requested {requested} rollouts but only {found} valid starts were found.")
+
+
 def _build_rollout_state(
     world,
     dataset,
@@ -488,6 +502,8 @@ def _run_world_batch(
             "mean_episode_reward": float(episode_rewards.mean()),
             "video_paths": saved_paths,
             "seeds": setup["seeds"],
+            "episode_ids": episodes_idx.tolist(),
+            "start_steps": start_steps.tolist(),
         }
     finally:
         world.close()
@@ -497,10 +513,10 @@ def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, e
     if str(cfg.data.dataset_type) != "pusht" or not bool(cfg.eval.run_world):
         return {}
 
+    _require_positive_rollout_count(cfg, context="Push-T direct-act world evaluation")
     dataset = _resolve_world_dataset(cfg)
     eval_episodes, eval_starts = _select_eval_starts(dataset, cfg)
-    if eval_episodes.size == 0:
-        raise ValueError("No valid Push-T world-evaluation rollout starts were found.")
+    _require_requested_rollouts(eval_episodes, cfg, context="Push-T direct-act world evaluation")
 
     rollout_batch_size = max(1, _resolve_rollout_batch_size(cfg))
     rollout_dir = Path(cfg.output_root) / cfg.experiment_name / f"eval_{int(cfg.eval.num_rollouts)}rollouts_{int(cfg.eval.max_steps)}steps"
@@ -513,6 +529,8 @@ def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, e
     success_traces: list[list[bool]] = []
     episode_rewards: list[float] = []
     video_paths: list[str] = []
+    rollout_episode_ids: list[int] = []
+    rollout_start_steps: list[int] = []
 
     for start in range(0, len(eval_episodes), rollout_batch_size):
         batch_slice = slice(start, min(start + rollout_batch_size, len(eval_episodes)))
@@ -533,6 +551,8 @@ def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, e
         success_traces.extend(batch["success_traces"])
         episode_rewards.extend(float(value) for value in batch["episode_rewards"])
         video_paths.extend(batch["video_paths"])
+        rollout_episode_ids.extend(int(value) for value in batch["episode_ids"])
+        rollout_start_steps.extend(int(value) for value in batch["start_steps"])
         videos_remaining = max(0, videos_remaining - len(batch["video_paths"]))
         video_offset += len(batch["video_paths"])
 
@@ -548,6 +568,8 @@ def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, e
         "success_traces": success_traces,
         "episode_rewards": episode_rewards,
         "video_paths": video_paths,
+        "episode_ids": rollout_episode_ids,
+        "start_steps": rollout_start_steps,
     }
 
 

@@ -22,6 +22,8 @@ from .eval_policy import (
     _normalize_sequence_pixels,
     _offline_metrics as _legacy_offline_metrics,
     _resolve_eval_max_steps,
+    _require_positive_rollout_count,
+    _require_requested_rollouts,
     _resize_hwc_uint8,
     _save_rollout_videos,
     _world_metrics as _legacy_world_metrics,
@@ -493,10 +495,10 @@ def _subgoal_world_metrics(system: VW2SubgoalSystem, cfg, *, mode: str, execute_
     if str(cfg.data.dataset_type) != "pusht" or not bool(cfg.eval.run_world):
         return {}
 
+    _require_positive_rollout_count(cfg, context="Push-T subgoal world evaluation")
     dataset = _resolve_world_dataset(cfg)
     eval_episodes, eval_starts = _select_eval_starts(dataset, cfg)
-    if eval_episodes.size == 0:
-        raise ValueError("No valid Push-T world-evaluation rollout starts were found.")
+    _require_requested_rollouts(eval_episodes, cfg, context="Push-T subgoal world evaluation")
 
     rollout_batch_size = max(1, int(cfg.eval.rollout_batch_size))
     output_dir = Path(cfg.output_root) / cfg.experiment_name / f"eval_subgoal_{int(cfg.eval.num_rollouts)}rollouts_{int(cfg.eval.max_steps)}steps" / label

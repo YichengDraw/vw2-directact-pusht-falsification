@@ -16,6 +16,10 @@ This folder contains the final public artifacts from the `pusht_subgoal_distill_
 
 The saved training config and Lightning hparams preserve original local provenance paths such as `train.init_from` and the dataset cache. Use the portable commands in the repository README for reproduction.
 
+## Evaluation Scope
+
+The world rollouts are deterministic starts from `pusht_expert_train.h5`, not an episode-held-out test split. BC and the direct-act oracle sanity check use direct-act evaluator starts: episodes 0-49 at `start_step=0`. TeacherOracle uses subgoal evaluator starts: episodes 101-150 at `start_step=3`. Offline train/validation samples are window-level splits, so they should not be interpreted as episode-level generalization evidence.
+
 ## Excluded
 
 - training checkpoints

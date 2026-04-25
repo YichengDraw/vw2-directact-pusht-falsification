@@ -14,7 +14,10 @@ from omegaconf import OmegaConf
 
 from vw2_directact.data import PushTSubgoalDataset
 from vw2_directact.subgoal_system import VW2SubgoalDataModule, VW2SubgoalSystem
-from vw2_directact.train.eval_policy import _resolve_world_dataset as _resolve_directact_world_dataset
+from vw2_directact.train.eval_policy import (
+    _require_requested_rollouts,
+    _resolve_world_dataset as _resolve_directact_world_dataset,
+)
 from vw2_directact.train.eval_subgoal_policy import (
     _resolve_world_dataset as _resolve_subgoal_world_dataset,
     _select_eval_starts as _select_subgoal_eval_starts,
@@ -257,6 +260,20 @@ class SubgoalTests(unittest.TestCase):
 
         self.assertEqual(episodes.tolist(), [0])
         self.assertEqual(starts.tolist(), [3])
+
+    def test_world_eval_fails_when_valid_starts_are_fewer_than_requested(self) -> None:
+        cfg = make_cfg(Path("unused.h5"))
+        cfg.eval.num_rollouts = 3
+
+        with self.assertRaisesRegex(ValueError, "requested 3 rollouts but only 2 valid starts"):
+            _require_requested_rollouts(np.asarray([0, 1]), cfg, context="Push-T test evaluation")
+
+    def test_world_eval_requires_positive_rollout_count(self) -> None:
+        cfg = make_cfg(Path("unused.h5"))
+        cfg.eval.num_rollouts = 0
+
+        with self.assertRaisesRegex(ValueError, "requires eval.num_rollouts to be positive"):
+            _require_requested_rollouts(np.asarray([], dtype=np.int64), cfg, context="Push-T test evaluation")
 
     def test_subgoal_dataset_and_predict_shapes(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

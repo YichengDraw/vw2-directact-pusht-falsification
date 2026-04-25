@@ -21,6 +21,8 @@ Gate A requires TeacherOracle world success of at least 90% on execute-1 and exe
 
 The direct-act oracle sanity check reached 100.0% on execute-1 and 98.0% on execute-2 after the same evaluator fix, which confirms that the evaluator can still recognize a strong oracle policy.
 
+The world rollouts are deterministic starts from `pusht_expert_train.h5`, not an episode-held-out test split. BC and the direct-act oracle sanity check use direct-act evaluator starts: episodes 0-49 at `start_step=0`. TeacherOracle uses subgoal evaluator starts: episodes 101-150 at `start_step=3`.
+
 ## Final Public Artifacts
 
 The final evidence lives under:

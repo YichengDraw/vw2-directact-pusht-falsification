@@ -111,6 +111,12 @@ python -m vw2_directact.train.eval_policy --config-name pusht `
 
 The older `vw2_directact/scripts/run_falsification_round.py` is retained as a legacy sweep helper. The public final result is the oracle-fix rerun above.
 
+## Evaluation Scope
+
+The world rollouts are deterministic starts from `pusht_expert_train.h5`, selected by the evaluator from valid expert episodes. They are not an episode-held-out test split. For the final artifacts, BC and the direct-act oracle sanity check use the direct-act evaluator starts: episodes 0-49 at `start_step=0`. TeacherOracle uses the subgoal evaluator starts: episodes 101-150 at `start_step=3`. The train/validation loaders split sampled windows, so offline validation metrics should not be read as episode-level generalization metrics.
+
+This scope does not weaken the Gate A verdict: TeacherOracle fails with 0.0% success even on these in-dataset deterministic world rollouts.
+
 ## Final Results From `round2_oraclefix`
 
 | Model | Offline Action MSE | Execute-1 Success | Execute-2 Success | Execute-1 Mean Reward | Execute-2 Mean Reward |
