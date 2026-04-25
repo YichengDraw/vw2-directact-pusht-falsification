@@ -14,6 +14,8 @@ This folder contains the final public artifacts from the `pusht_subgoal_distill_
 
 `teacher_oracle/config.yaml` is the saved training-stage config. The final world-evaluation commands used the command-line override `eval.rollout_batch_size=10`; batching changes memory use only and does not change rollout semantics.
 
+The saved training config and Lightning hparams preserve original local provenance paths such as `train.init_from` and the dataset cache. Use the portable commands in the repository README for reproduction.
+
 ## Excluded
 
 - training checkpoints
