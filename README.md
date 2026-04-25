@@ -73,15 +73,14 @@ The loader resolves the dataset in this order:
 
 ## Final Rerun Commands
 
-The final run used `eval.rollout_batch_size=10` for stable local RTX 4070 8 GB world evaluation. This changes batching only, not evaluation semantics.
+The final world-evaluation commands used `eval.rollout_batch_size=10` for stable local RTX 4070 8 GB evaluation. This changes batching only, not evaluation semantics.
 
 Train the TeacherOracle subgoal branch:
 
 ```powershell
 python -m vw2_directact.train.train_teacher_oracle --config-name pusht `
   experiment_name=pusht_subgoal_distill_round2_oraclefix `
-  train.init_from=/path/to/pusht_falsification_oracle/action/last.ckpt `
-  eval.rollout_batch_size=10
+  train.init_from=/path/to/pusht_falsification_oracle/action/last.ckpt
 ```
 
 Evaluate BC and TeacherOracle with 50 rollouts and 100 steps:

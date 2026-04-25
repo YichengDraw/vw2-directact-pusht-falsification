@@ -12,6 +12,8 @@ This folder contains the final public artifacts from the `pusht_subgoal_distill_
 - TeacherOracle config, environment snapshot, frozen requirements, and CSV metrics
 - direct-act oracle sanity-check evaluation JSONs after the evaluator fix
 
+`teacher_oracle/config.yaml` is the saved training-stage config. The final world-evaluation commands used the command-line override `eval.rollout_batch_size=10`; batching changes memory use only and does not change rollout semantics.
+
 ## Excluded
 
 - training checkpoints

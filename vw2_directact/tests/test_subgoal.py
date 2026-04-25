@@ -146,7 +146,7 @@ class DummyDirectActModel(nn.Module):
         if plan_override is None:
             raise ValueError("plan_override is required for this test.")
         values = plan_override[:, 0, 0].to(self.anchor.device, dtype=torch.float32)
-        return values.view(-1, 1, 1)
+        return torch.stack([values, values + 0.25], dim=1).unsqueeze(-1)
 
 
 class DummySubgoalModel(nn.Module):
@@ -158,7 +158,7 @@ class DummySubgoalModel(nn.Module):
         if oracle_subgoal is None:
             raise ValueError("oracle_subgoal is required for this test.")
         values = oracle_subgoal[:, 0].to(self.anchor.device, dtype=torch.float32)
-        return values.view(-1, 1, 1)
+        return torch.stack([values, values + 0.25], dim=1).unsqueeze(-1)
 
 
 class SubgoalTests(unittest.TestCase):
@@ -173,6 +173,18 @@ class SubgoalTests(unittest.TestCase):
         info = {"pixels": np.zeros((1, 1, 4, 4, 3), dtype=np.uint8)}
         values = [float(policy.get_action(info)[0, 0]) for _ in range(3)]
         self.assertEqual(values, [1.0, 2.0, 3.0])
+
+    def test_directact_policy_replans_oracle_plan_after_execute_window(self) -> None:
+        policy = DirectActPolicy(
+            model=DummyDirectActModel(),
+            image_size=4,
+            execute_steps=2,
+            mode="oracle",
+            oracle_plan_embeddings_by_step=torch.tensor([[[[1.0]], [[2.0]], [[3.0]], [[4.0]]]], dtype=torch.float32),
+        )
+        info = {"pixels": np.zeros((1, 1, 4, 4, 3), dtype=np.uint8)}
+        values = [float(policy.get_action(info)[0, 0]) for _ in range(4)]
+        self.assertEqual(values, [1.0, 1.25, 3.0, 3.25])
 
     def test_subgoal_policy_uses_stepwise_oracle_subgoal(self) -> None:
         policy = SubgoalPolicy(
@@ -191,6 +203,24 @@ class SubgoalTests(unittest.TestCase):
         info = {"pixels": np.zeros((1, 1, 4, 4, 3), dtype=np.uint8)}
         values = [float(policy.get_action(info)[0, 0]) for _ in range(3)]
         self.assertEqual(values, [5.0, 6.0, 7.0])
+
+    def test_subgoal_policy_replans_oracle_subgoal_after_execute_window(self) -> None:
+        policy = SubgoalPolicy(
+            model=DummySubgoalModel(),
+            image_size=4,
+            history_steps=4,
+            action_dim=1,
+            execute_steps=2,
+            horizon_steps=8,
+            mode="oracle",
+            oracle_subgoals_by_step=torch.tensor([[[5.0], [6.0], [7.0], [8.0]]], dtype=torch.float32),
+            bootstrap_history_pixels=torch.zeros(1, 4, 3, 4, 4, dtype=torch.float32),
+            bootstrap_history_proprio=None,
+            bootstrap_prev_actions=torch.zeros(1, 4, 1, dtype=torch.float32),
+        )
+        info = {"pixels": np.zeros((1, 1, 4, 4, 3), dtype=np.uint8)}
+        values = [float(policy.get_action(info)[0, 0]) for _ in range(4)]
+        self.assertEqual(values, [5.0, 5.25, 7.0, 7.25])
 
     def test_subgoal_dataset_and_predict_shapes(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
