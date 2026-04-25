@@ -7,8 +7,8 @@ This folder contains the final public artifacts from the `pusht_subgoal_distill_
 - `subgoal_distill_round2_oraclefix_report.tex` and `subgoal_distill_round2_oraclefix_report.pdf`
 - `eval_subgoal_50rollouts_100steps/summary.json`
 - BC and TeacherOracle per-episode CSVs
-- 10 BC rollout videos
-- 10 TeacherOracle rollout videos
+- 10 direct-act oracle sanity-check rollout videos under `eval_50rollouts_100steps/videos_execute_1/`
+- 10 TeacherOracle execute-1 rollout videos under `eval_subgoal_50rollouts_100steps/TeacherOracle/videos_execute_1/`
 - TeacherOracle config, environment snapshot, frozen requirements, and CSV metrics
 - direct-act oracle sanity-check evaluation JSONs after the evaluator fix
 
