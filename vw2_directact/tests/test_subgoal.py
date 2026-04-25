@@ -15,6 +15,7 @@ from omegaconf import OmegaConf
 from vw2_directact.data import PushTSubgoalDataset
 from vw2_directact.subgoal_system import VW2SubgoalDataModule, VW2SubgoalSystem
 from vw2_directact.train.eval_policy import (
+    _merge_batch_max_steps,
     _require_requested_rollouts,
     _resolve_world_dataset as _resolve_directact_world_dataset,
 )
@@ -22,6 +23,7 @@ from vw2_directact.train.eval_subgoal_policy import (
     _resolve_world_dataset as _resolve_subgoal_world_dataset,
     _select_eval_starts as _select_subgoal_eval_starts,
     _subgoal_offline_metrics,
+    _teacher_gate,
 )
 from vw2_directact.utils.rollout import DirectActPolicy, SubgoalPolicy
 
@@ -274,6 +276,17 @@ class SubgoalTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "requires eval.num_rollouts to be positive"):
             _require_requested_rollouts(np.asarray([], dtype=np.int64), cfg, context="Push-T test evaluation")
+
+    def test_world_eval_rejects_inconsistent_batch_max_steps(self) -> None:
+        current = _merge_batch_max_steps(None, {"max_steps": 100}, context="Push-T test evaluation")
+        self.assertEqual(current, 100)
+
+        with self.assertRaisesRegex(ValueError, "inconsistent max_steps"):
+            _merge_batch_max_steps(current, {"max_steps": 99}, context="Push-T test evaluation")
+
+    def test_teacher_gate_requires_world_metrics(self) -> None:
+        with self.assertRaisesRegex(ValueError, "missing world metrics"):
+            _teacher_gate({"world": {"1": {}, "2": {}}})
 
     def test_subgoal_dataset_and_predict_shapes(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

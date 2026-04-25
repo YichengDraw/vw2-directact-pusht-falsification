@@ -259,6 +259,13 @@ def _require_requested_rollouts(eval_episodes: np.ndarray, cfg, *, context: str)
         raise ValueError(f"{context} requested {requested} rollouts but only {found} valid starts were found.")
 
 
+def _merge_batch_max_steps(current: int | None, batch: dict[str, Any], *, context: str) -> int:
+    value = int(batch["max_steps"])
+    if current is not None and current != value:
+        raise ValueError(f"{context} produced inconsistent max_steps across batches: {current} vs {value}.")
+    return value
+
+
 def _build_rollout_state(
     world,
     dataset,
@@ -531,6 +538,7 @@ def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, e
     video_paths: list[str] = []
     rollout_episode_ids: list[int] = []
     rollout_start_steps: list[int] = []
+    actual_max_steps: int | None = None
 
     for start in range(0, len(eval_episodes), rollout_batch_size):
         batch_slice = slice(start, min(start + rollout_batch_size, len(eval_episodes)))
@@ -546,6 +554,7 @@ def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, e
             video_dir=video_dir,
             video_offset=video_offset,
         )
+        actual_max_steps = _merge_batch_max_steps(actual_max_steps, batch, context="Push-T direct-act world evaluation")
         episode_successes.extend(bool(value) for value in batch["episode_successes"])
         reward_traces.extend(batch["reward_traces"])
         success_traces.extend(batch["success_traces"])
@@ -559,7 +568,7 @@ def _world_metrics(system: VW2DirectActSystem, cfg, *, conditioning_mode: str, e
     success_rate = float(np.mean(np.asarray(episode_successes, dtype=np.float32)) * 100.0)
     return {
         "num_rollouts": len(episode_successes),
-        "max_steps": int(cfg.eval.max_steps),
+        "max_steps": int(actual_max_steps if actual_max_steps is not None else cfg.eval.max_steps),
         "execute_actions_per_plan": execute_steps,
         "success_rate": success_rate,
         "mean_episode_reward": float(np.mean(episode_rewards)) if episode_rewards else float("nan"),
