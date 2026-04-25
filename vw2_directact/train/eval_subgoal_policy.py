@@ -56,9 +56,11 @@ def _resolve_execute_sweep(cfg) -> list[int]:
 
 
 def _resolve_world_dataset(cfg):
+    resolved = resolve_h5_path(cfg.data.path, cfg.data.dataset_name, cfg.data.cache_dir)
+    if not resolved.exists():
+        raise FileNotFoundError(f"Push-T HDF5 dataset not found: {resolved}")
     import stable_worldmodel as swm
 
-    resolved = resolve_h5_path(cfg.data.path, cfg.data.dataset_name, cfg.data.cache_dir)
     return swm.data.HDF5Dataset(resolved.stem, cache_dir=str(resolved.parent))
 
 

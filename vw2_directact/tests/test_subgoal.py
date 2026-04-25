@@ -14,7 +14,11 @@ from omegaconf import OmegaConf
 
 from vw2_directact.data import PushTSubgoalDataset
 from vw2_directact.subgoal_system import VW2SubgoalDataModule, VW2SubgoalSystem
-from vw2_directact.train.eval_subgoal_policy import _subgoal_offline_metrics
+from vw2_directact.train.eval_policy import _resolve_world_dataset as _resolve_directact_world_dataset
+from vw2_directact.train.eval_subgoal_policy import (
+    _resolve_world_dataset as _resolve_subgoal_world_dataset,
+    _subgoal_offline_metrics,
+)
 from vw2_directact.utils.rollout import DirectActPolicy, SubgoalPolicy
 
 os.environ.setdefault("WANDB_CONSOLE", "off")
@@ -262,6 +266,16 @@ class SubgoalTests(unittest.TestCase):
             system = VW2SubgoalSystem(cfg, "joint_subgoal")
             with self.assertRaisesRegex(RuntimeError, "did not match"):
                 system.load_weights_from_checkpoint(str(checkpoint_path), strict=True)
+
+    def test_world_dataset_resolution_fails_when_h5_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            missing_path = Path(temp_dir) / "missing_pusht.h5"
+            cfg = make_cfg(missing_path)
+
+            with self.assertRaisesRegex(FileNotFoundError, "Push-T HDF5 dataset not found"):
+                _resolve_directact_world_dataset(cfg)
+            with self.assertRaisesRegex(FileNotFoundError, "Push-T HDF5 dataset not found"):
+                _resolve_subgoal_world_dataset(cfg)
 
 
 if __name__ == "__main__":
