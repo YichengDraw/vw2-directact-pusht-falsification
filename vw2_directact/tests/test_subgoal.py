@@ -17,6 +17,7 @@ from vw2_directact.subgoal_system import VW2SubgoalDataModule, VW2SubgoalSystem
 from vw2_directact.train.eval_policy import _resolve_world_dataset as _resolve_directact_world_dataset
 from vw2_directact.train.eval_subgoal_policy import (
     _resolve_world_dataset as _resolve_subgoal_world_dataset,
+    _select_eval_starts as _select_subgoal_eval_starts,
     _subgoal_offline_metrics,
 )
 from vw2_directact.utils.rollout import DirectActPolicy, SubgoalPolicy
@@ -161,6 +162,25 @@ class DummySubgoalModel(nn.Module):
         return torch.stack([values, values + 0.25], dim=1).unsqueeze(-1)
 
 
+class FakeWorldDataset:
+    column_names = ["episode_idx", "step_idx"]
+
+    def __init__(self, episode_ids: np.ndarray, step_idx: np.ndarray) -> None:
+        self._episode_ids = episode_ids
+        self._step_idx = step_idx
+
+    def get_col_data(self, name: str) -> np.ndarray:
+        if name == "episode_idx":
+            return self._episode_ids
+        if name == "step_idx":
+            return self._step_idx
+        raise KeyError(name)
+
+    def get_row_data(self, rows: list[int]) -> dict[str, np.ndarray]:
+        index = np.asarray(rows, dtype=np.int64)
+        return {"episode_idx": self._episode_ids[index], "step_idx": self._step_idx[index]}
+
+
 class SubgoalTests(unittest.TestCase):
     def test_directact_policy_uses_stepwise_oracle_plan(self) -> None:
         policy = DirectActPolicy(
@@ -221,6 +241,22 @@ class SubgoalTests(unittest.TestCase):
         info = {"pixels": np.zeros((1, 1, 4, 4, 3), dtype=np.uint8)}
         values = [float(policy.get_action(info)[0, 0]) for _ in range(4)]
         self.assertEqual(values, [5.0, 5.25, 7.0, 7.25])
+
+    def test_subgoal_eval_start_accepts_exact_terminal_window(self) -> None:
+        cfg = make_cfg(Path("unused.h5"))
+        cfg.eval.num_rollouts = 1
+        cfg.eval.max_steps = 100
+        cfg.eval.goal_offset_steps = 8
+        cfg.data.plan_horizon = 8
+        cfg.subgoal.history_steps = 4
+        episode_ids = np.zeros(111, dtype=np.int64)
+        step_idx = np.arange(111, dtype=np.int64)
+        dataset = FakeWorldDataset(episode_ids, step_idx)
+
+        episodes, starts = _select_subgoal_eval_starts(dataset, cfg)
+
+        self.assertEqual(episodes.tolist(), [0])
+        self.assertEqual(starts.tolist(), [3])
 
     def test_subgoal_dataset_and_predict_shapes(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -165,7 +165,8 @@ def _select_eval_starts(dataset, cfg) -> tuple[np.ndarray, np.ndarray]:
     for episode in episodes:
         mask = episode_ids == episode
         episode_steps = step_idx[mask]
-        limit = int(episode_steps.max()) - required_future
+        episode_length = int(episode_steps.max()) + 1
+        limit = episode_length - required_future
         valid = np.where(mask & (step_idx >= min_start) & (step_idx <= limit))[0]
         if valid.size > 0:
             starts.append(valid[0])
