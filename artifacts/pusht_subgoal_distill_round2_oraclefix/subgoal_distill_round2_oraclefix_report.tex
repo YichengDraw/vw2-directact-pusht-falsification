@@ -35,6 +35,12 @@ The rollout-side oracle-conditioning bug was fixed, regression tests were added,
 
 \textbf{Experiment ID.} \texttt{pusht\_subgoal\_distill\_round2\_oraclefix}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{pusht_falsification_overview.png}
+  \caption{Overview illustration also used in the repository README. The committed source code, JSON/CSV artifacts, and this report remain the source of truth for metrics and conclusions.}
+\end{figure}
+
 \section*{1. Model Pipeline}
 
 \begin{figure}[h]
@@ -161,7 +167,8 @@ Hard stop & If Gate A fails, stop immediately and skip StudentFrozen and Student
   \item Direct-act oracle sanity videos: \path{eval_50rollouts_100steps/videos_execute_1/}
   \item TeacherOracle videos: \path{videos_execute_1/} under the TeacherOracle subgoal folder
   \item Direct-act oracle sanity JSONs: \path{directact_oracle_eval_50rollouts_100steps/}
-  \item Architecture figures: \path{model_pipeline.svg} and \path{experiment_flow.svg}
+  \item Overview figure shared with README: \path{pusht_falsification_overview.png}
+  \item Architecture diagrams: \path{model_pipeline.svg} and \path{experiment_flow.svg}
 \end{itemize}
 
 Checkpoints and raw datasets are intentionally excluded from version control.
