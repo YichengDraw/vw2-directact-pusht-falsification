@@ -8,7 +8,7 @@ Final public evidence package for the Push-T continuous-subgoal branch after the
 
 ![VW2-DirectAct Push-T falsification overview](docs/figures/pusht_falsification_overview.png)
 
-This user-provided ChatGPT-generated overview is for orientation only. The committed source code, JSON/CSV artifacts, and final report are the evidence for metrics and conclusions.
+This overview is for orientation only. The committed source code, JSON/CSV artifacts, and final report are the evidence for metrics and conclusions.
 
 Detailed architecture diagrams are in [docs/architecture.md](docs/architecture.md).
 
