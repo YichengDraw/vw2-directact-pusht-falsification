@@ -19,109 +19,61 @@
   urlcolor=blue!60!black
 }
 
-\setlist[itemize]{leftmargin=1.5em}
-\setlength{\parskip}{0.5em}
+\setlist[itemize]{leftmargin=1.35em,itemsep=0.15em}
+\setlength{\parskip}{0.45em}
 \setlength{\parindent}{0pt}
 
-\title{\textbf{VW2-DirectAct Push-T Continuous-Subgoal Falsification}\\Oracle-Fix Verification and Final Rerun}
+\title{\textbf{VW2-DirectAct Push-T Falsification}\\Oracle-Fix Final Report}
 \author{YichengDraw}
 \date{2026-04-22}
 
 \begin{document}
 \maketitle
 
-\textbf{Executive Summary.}
-The rollout-side oracle-conditioning bug was fixed, regression tests were added, the TeacherOracle subgoal model was rerun, and the fixed evaluator was sanity-checked with the direct-act oracle action model. The final TeacherOracle result remains a decisive Gate A failure: \textbf{0.0\% world success on execute-1 and 0.0\% world success on execute-2}. The Push-T continuous-subgoal branch stops at Gate A.
+\textbf{Verdict.}
+After fixing rollout-side oracle conditioning, rerunning TeacherOracle, and sanity-checking the evaluator with a direct-act oracle policy, the Push-T continuous-subgoal branch still fails Gate A: \textbf{0.0\% success on execute-1} and \textbf{0.0\% success on execute-2}. StudentFrozen and StudentJoint were stopped.
 
 \textbf{Experiment ID.} \texttt{pusht\_subgoal\_distill\_round2\_oraclefix}
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=\textwidth]{pusht_falsification_overview.png}
-  \caption{Overview illustration also used in the repository README. The committed source code, JSON/CSV artifacts, and this report remain the source of truth for metrics and conclusions.}
+  \caption{Overview illustration also used in the repository README. The source code, JSON/CSV artifacts, and this report are the source of truth for metrics and conclusions.}
 \end{figure}
 
-\section*{1. Model Pipeline}
+\section*{1. What Was Tested}
 
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=\textwidth]{model_pipeline.pdf}
-  \caption{Continuous-subgoal pipeline used by the final Push-T oracle-fix rerun. The TeacherOracle path encodes a step-aligned future window at every rollout step.}
-\end{figure}
+Gate A asks whether future information can be compressed into a continuous subgoal that still drives successful Push-T world rollouts through the shared action decoder.
 
-The model uses a shared action decoder with two subgoal sources:
 \begin{itemize}
-  \item \textbf{TeacherOracle path}: \texttt{FutureBottleneck} encodes a future rollout window into a continuous subgoal.
-  \item \textbf{Student path}: \texttt{SubgoalPredictor} predicts the continuous subgoal from encoded history.
+  \item \textbf{TeacherOracle}: encodes a future rollout window into a continuous subgoal.
+  \item \textbf{Student}: predicts that subgoal from history; skipped because TeacherOracle failed Gate A.
+  \item \textbf{Fix applied}: oracle future windows advance at every rollout step instead of reusing the step-0 oracle subgoal.
 \end{itemize}
 
-The final rerun evaluates the TeacherOracle path. StudentFrozen and StudentJoint are intentionally skipped after Gate A fails.
+\section*{2. Evaluation Scope}
 
-\section*{2. Experiment Flow}
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=\textwidth]{experiment_flow.pdf}
-  \caption{Final experiment flow from oracle-conditioning fix to Gate A hard stop.}
-\end{figure}
-
-Gate A requires TeacherOracle success of at least 90\% on execute-1 and execute-2 over 50 rollouts with 100 world steps per rollout. The final rerun uses \texttt{eval.rollout\_batch\_size=10} for stable local RTX 4070 8 GB evaluation. This changes batching only, not evaluation semantics.
-
-\textbf{Evaluation scope.}
-The world rollouts are deterministic starts from \texttt{pusht\_expert\_train.h5}, selected by the evaluator from valid expert episodes. They are not an episode-held-out test split. BC and the direct-act oracle sanity check use direct-act evaluator starts: episodes 0--49 at \texttt{start\_step=0}. TeacherOracle uses subgoal evaluator starts: episodes 101--150 at \texttt{start\_step=3}. Offline train/validation samples are window-level splits, so offline validation metrics should not be interpreted as episode-level generalization evidence.
-
-\section*{3. Implementation Fixes}
-\begin{itemize}
-  \item \textbf{Stepwise oracle conditioning.} \texttt{DirectActPolicy} and \texttt{SubgoalPolicy} consume per-step oracle plan/subgoal tensors and advance a rollout-step counter during world evaluation.
-  \item \textbf{TeacherOracle world evaluation.} \texttt{eval\_subgoal\_policy.py} generates oracle subgoals from rollout windows aligned to the current rollout step.
-  \item \textbf{Direct-act oracle evaluation.} \texttt{eval\_policy.py} advances oracle plan conditioning by rollout step and uses the configured maximum evaluation length.
-  \item \textbf{Rollout count guard.} World evaluation now raises an error if fewer valid starts are found than \texttt{eval.num\_rollouts} requests.
-  \item \textbf{Regression coverage.} Unit tests verify stepwise oracle plan selection and stepwise oracle subgoal selection.
-\end{itemize}
-
-\section*{4. Training Setup}
 \begin{tabularx}{\textwidth}{>{\bfseries}l X}
 \toprule
 Item & Value \\
 \midrule
-Teacher stage & \texttt{train\_teacher\_oracle.py} \\
-Epochs & 3 \\
-Train batches per epoch & 200 \\
-Validation batches per epoch & 20 \\
-Train samples & 12000 \\
-Validation samples & 1024 \\
-Future horizon & 8 \\
-History steps & 4 \\
-Action chunk & 4 \\
-Eval rollouts & 50 \\
-Eval steps & 100 \\
-Execute sweep & \(\{1,2\}\) \\
+Gate A rule & TeacherOracle success \(\ge 90\%\) on execute-1 and execute-2 \\
+Rollouts & 50 per execute setting, 100 world steps per rollout \\
+Batching & \texttt{eval.rollout\_batch\_size=10}; memory-only change \\
+Dataset starts & Deterministic starts from \texttt{pusht\_expert\_train.h5} \\
+BC / direct-act starts & episodes 0--49, \texttt{start\_step=0} \\
+TeacherOracle starts & episodes 101--150, \texttt{start\_step=3} \\
+Generalization caveat & Offline splits are window-level, not episode-held-out splits \\
 \bottomrule
 \end{tabularx}
 
-Final TeacherOracle training metrics from the published CSV log:
+\section*{3. Results}
 
-\begin{center}
-\begin{tabular}{ll}
-\toprule
-Metric & Value \\
-\midrule
-\texttt{val/loss} & 0.0108936075 \\
-\texttt{val/teacher\_action\_mse} & 0.0217941180 \\
-\texttt{val/subgoal\_batch\_variance} & 0.0000237405 \\
-\texttt{val/covariance\_offdiag\_mean} & 0.0000103518 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The offline action fit is numerically strong, while the subgoal representation has very low batch variance. This is consistent with a bottleneck that does not encode enough closed-loop control information for Push-T.
-
-\section*{5. World Results}
 \begin{center}
 \small
-\begin{tabular}{llllll}
+\begin{tabular}{lrrrrr}
 \toprule
-Mode & MSE & Exec-1 & Reward-1 & Exec-2 & Reward-2 \\
+Model & MSE & Exec-1 & Reward-1 & Exec-2 & Reward-2 \\
 \midrule
 BC & 0.02281195 & 0.0\% & -23644.98 & 0.0\% & -24199.06 \\
 TeacherOracle & 0.02055714 & 0.0\% & -21435.20 & 0.0\% & -20406.16 \\
@@ -130,47 +82,30 @@ TeacherOracle & 0.02055714 & 0.0\% & -21435.20 & 0.0\% & -20406.16 \\
 \normalsize
 \end{center}
 
-TeacherOracle improves offline action MSE and mean reward over BC, yet neither policy achieves a single success in 50 rollouts on execute-1 or execute-2.
+TeacherOracle improves offline action MSE and mean reward over BC, but produces zero successes in 100 evaluated world rollouts. The branch fails on the behavior metric that matters for Gate A.
 
 \textbf{Evaluator sanity check.}
-The same fixed evaluator was rerun on the direct-act oracle action model:
+The fixed direct-act oracle evaluator still succeeds:
 
 \begin{center}
-\begin{tabular}{llll}
+\begin{tabular}{lrrr}
 \toprule
-Mode & Exec-1 Success & Exec-2 Success & Exec-4 Success \\
+Model & Exec-1 & Exec-2 & Exec-4 \\
 \midrule
 DirectAct Oracle & 100.0\% & 98.0\% & 0.0\% \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-This confirms that the evaluator can still recognize a strong oracle policy after the fix. The continuous-subgoal result is a branch failure, not a confirmed evaluator failure.
+This separates evaluator correctness from the continuous-subgoal branch failure.
 
-\section*{6. Gate Decision}
-\begin{center}
-\begin{tabularx}{\textwidth}{>{\bfseries}l >{\raggedright\arraybackslash}X c}
-\toprule
-Gate & Rule & Result \\
-\midrule
-Gate A & TeacherOracle success \(\ge 90\%\) on execute-1 and execute-2 & \textbf{FAIL} \\
-Hard stop & If Gate A fails, stop immediately and skip StudentFrozen and StudentJoint & \textbf{TRIGGERED} \\
-\bottomrule
-\end{tabularx}
-\end{center}
+\section*{4. Evidence}
 
-\section*{7. Public Artifacts}
 \begin{itemize}
-  \item Final artifact root: \path{artifacts/pusht_subgoal_distill_round2_oraclefix/}
-  \item Main summary: \path{eval_subgoal_50rollouts_100steps/summary.json}
-  \item Per-episode CSVs: BC and TeacherOracle folders in the subgoal evaluation directory
-  \item Direct-act oracle sanity videos: \path{eval_50rollouts_100steps/videos_execute_1/}
-  \item TeacherOracle videos: \path{videos_execute_1/} under the TeacherOracle subgoal folder
-  \item Direct-act oracle sanity JSONs: \path{directact_oracle_eval_50rollouts_100steps/}
-  \item Overview figure shared with README: \path{pusht_falsification_overview.png}
-  \item Architecture diagrams: \path{model_pipeline.svg} and \path{experiment_flow.svg}
+  \item Artifact root: \path{artifacts/pusht_subgoal_distill_round2_oraclefix/}
+  \item Main evidence: summary JSON, per-episode CSVs, rollout videos, TeacherOracle logs, and direct-act oracle sanity JSONs under the artifact root.
+  \item Figures: shared overview \path{pusht_falsification_overview.png}; detailed diagrams in \path{docs/figures/}.
+  \item Exclusions and guards: checkpoints, raw datasets, and local caches are excluded; world evaluation fails loudly when required rollout dependencies or starts are missing.
 \end{itemize}
-
-Checkpoints and raw datasets are intentionally excluded from version control.
 
 \end{document}
