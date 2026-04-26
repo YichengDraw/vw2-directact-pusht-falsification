@@ -23,9 +23,9 @@ More detail: [docs/architecture.md](docs/architecture.md).
 
 ## Overview Illustration
 
-![VW2-DirectAct Push-T falsification overview](docs/figures/pusht_falsification_overview.jpg)
+![VW2-DirectAct Push-T falsification overview](docs/figures/pusht_falsification_overview.png)
 
-This user-provided ChatGPT share preview is included as an illustrative overview only. Treat the committed JSON, CSV, source code, and report artifacts as the evidence backing the metrics and verdict.
+This user-provided ChatGPT-generated overview is included as an illustrative overview only. Treat the committed JSON, CSV, source code, and report artifacts as the evidence backing the metrics and verdict.
 
 ## Repository Layout
 

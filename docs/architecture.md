@@ -25,9 +25,9 @@ The world rollouts are deterministic starts from `pusht_expert_train.h5`, not an
 
 ## Overview Illustration
 
-![VW2-DirectAct Push-T falsification overview](figures/pusht_falsification_overview.jpg)
+![VW2-DirectAct Push-T falsification overview](figures/pusht_falsification_overview.png)
 
-This user-provided ChatGPT share preview is useful for quick orientation. It is not an independent source of truth; the repository artifacts remain the evidence for the final numbers and gate decision.
+This user-provided ChatGPT-generated overview is illustrative and useful for quick orientation. It is not an independent source of truth; the repository artifacts remain the evidence for the final numbers and gate decision.
 
 ## Final Public Artifacts
 
