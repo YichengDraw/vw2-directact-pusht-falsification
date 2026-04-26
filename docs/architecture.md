@@ -23,6 +23,12 @@ The direct-act oracle sanity check reached 100.0% on execute-1 and 98.0% on exec
 
 The world rollouts are deterministic starts from `pusht_expert_train.h5`, not an episode-held-out test split. BC and the direct-act oracle sanity check use direct-act evaluator starts: episodes 0-49 at `start_step=0`. TeacherOracle uses subgoal evaluator starts: episodes 101-150 at `start_step=3`.
 
+## Overview Illustration
+
+![VW2-DirectAct Push-T falsification overview](figures/pusht_falsification_overview.jpg)
+
+This user-provided ChatGPT share preview is useful for quick orientation. It is not an independent source of truth; the repository artifacts remain the evidence for the final numbers and gate decision.
+
 ## Final Public Artifacts
 
 The final evidence lives under:
