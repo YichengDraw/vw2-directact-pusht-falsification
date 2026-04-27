@@ -2,6 +2,8 @@
 
 Final public evidence package for the Push-T continuous-subgoal branch after the rollout-side oracle-conditioning fix.
 
+**Innovation tested:** a future-conditioned TeacherOracle compresses rollout information into a continuous subgoal; a history-only Student is meant to predict that subgoal and reuse the same action decoder.
+
 **Verdict:** TeacherOracle failed Gate A after the fixed rerun: **0.0% world success on execute-1** and **0.0% world success on execute-2**. StudentFrozen and StudentJoint were stopped.
 
 ![VW2-DirectAct continuous-subgoal distillation architecture](docs/figures/pusht_falsification_overview.png)

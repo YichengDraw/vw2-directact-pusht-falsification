@@ -9,7 +9,7 @@ data:
   dataset_type: pusht
   path: null
   dataset_name: pusht_expert_train
-  cache_dir: ${oc.env:STABLEWM_HOME,C:/Users/yiche/.stable-wm}
+  cache_dir: ${oc.env:STABLEWM_HOME,~/.stable-wm}
   image_size: 96
   plan_horizon: 8
   train_split: 0.98
@@ -56,7 +56,7 @@ train:
   limit_val_batches: 20
   save_top_k: 1
   resume_from: null
-  init_from: C:/Users/yiche/PycharmProjects/lab_code_26spring/research_code/vw2_directact_outputs/pusht_falsification_oracle/action/last.ckpt
+  init_from: /path/to/pusht_falsification_oracle/action/last.ckpt
   joint_train_encoder: false
   joint_train_tokenizer: false
 loss:
@@ -90,7 +90,7 @@ eval:
   num_rollouts: 50
   goal_offset_steps: 25
   max_steps: 100
-  rollout_batch_size: 50
+  rollout_batch_size: 10
   save_video: true
   save_video_count: 10
   execute_actions_per_plan_sweep:

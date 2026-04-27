@@ -1,5 +1,7 @@
 # VW2-DirectAct Push-T Architecture
 
+The README and final report use the narrative overview figure. This page keeps the two code-level diagrams: the model pipeline and the experiment gate.
+
 ## Model Pipeline
 
 ![VW2-DirectAct continuous-subgoal model pipeline](figures/model_pipeline.svg)
