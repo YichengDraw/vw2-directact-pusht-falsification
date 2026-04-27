@@ -38,7 +38,7 @@ After fixing rollout-side oracle conditioning, rerunning TeacherOracle, and sani
 \begin{figure}[h]
   \centering
   \includegraphics[width=\textwidth]{pusht_falsification_overview.png}
-  \caption{Overview illustration also used in the repository README. The source code, JSON/CSV artifacts, and this report are the source of truth for metrics and conclusions.}
+  \caption{Continuous-subgoal distillation architecture.}
 \end{figure}
 
 \section*{1. What Was Tested}
@@ -101,11 +101,6 @@ This separates evaluator correctness from the continuous-subgoal branch failure.
 
 \section*{4. Evidence}
 
-\begin{itemize}
-  \item Artifact root: \path{artifacts/pusht_subgoal_distill_round2_oraclefix/}
-  \item Main evidence: summary JSON, per-episode CSVs, rollout videos, TeacherOracle logs, and direct-act oracle sanity JSONs under the artifact root.
-  \item Figures: shared overview \path{pusht_falsification_overview.png}; detailed diagrams in \path{docs/figures/}.
-  \item Exclusions and guards: checkpoints, raw datasets, and local caches are excluded; world evaluation fails loudly when required rollout dependencies or starts are missing.
-\end{itemize}
+Artifact root: \path{artifacts/pusht_subgoal_distill_round2_oraclefix/}. Evidence includes summary JSON, per-episode CSVs, rollout videos, TeacherOracle logs, and direct-act oracle sanity JSONs. Checkpoints, raw datasets, and local caches are excluded; missing world-evaluation dependencies fail loudly.
 
 \end{document}

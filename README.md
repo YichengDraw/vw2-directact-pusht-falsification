@@ -4,9 +4,9 @@ Final public evidence package for the Push-T continuous-subgoal branch after the
 
 **Verdict:** TeacherOracle failed Gate A after the fixed rerun: **0.0% world success on execute-1** and **0.0% world success on execute-2**. StudentFrozen and StudentJoint were stopped.
 
-![VW2-DirectAct Push-T falsification overview](docs/figures/pusht_falsification_overview.png)
+![VW2-DirectAct continuous-subgoal distillation architecture](docs/figures/pusht_falsification_overview.png)
 
-The final report is the source of truth for evaluation scope, metrics, sanity checks, and evidence paths:
+Final materials:
 
 - Report: `artifacts/pusht_subgoal_distill_round2_oraclefix/subgoal_distill_round2_oraclefix_report.pdf`
 - Report source: `artifacts/pusht_subgoal_distill_round2_oraclefix/subgoal_distill_round2_oraclefix_report.tex`
